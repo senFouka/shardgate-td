@@ -126,11 +126,22 @@ async function boot(): Promise<void> {
       game.pick(choice);
     },
     onCloseTower: () => input.select(null),
-    onRestart: () => startGame(),
+    onRestart: () => void nextGame(),
     onDifficulty: (d) => {
       profile.setDifficulty(d);
-      startGame();
+      // switching before the first wave is not a break between games: no ad
+      if (game.phase === 'ready') startGame();
+      else void nextGame();
     },
+    onAdReroll: () => void rewarded(() => game.rerollOffer()),
+    onAdRefill: () => void rewarded(() => game.refillLives()),
+    onAdContinue: () =>
+      void rewarded(() => {
+        if (!game.continueGame()) return false;
+        hud.hideEnd();
+        platform.gameplayStart();
+        return true;
+      }),
   });
   const input = new BuildInput(camera, canvas, rig, scene, new Particles(8, true), {
     onSelect: (t) => hud.showTower(t),
@@ -141,6 +152,42 @@ async function boot(): Promise<void> {
     },
     onCancelBuild: () => hud.pick(null),
   });
+
+  /* -------------------------------------------------------------- ads */
+
+  /** True while an ad plays: the game holds still (its audio is muted by the platform). */
+  let adPlaying = false;
+
+  /**
+   * A rewarded ad the player asked for. The reward is granted only when the
+   * platform confirms the ad was watched to the end; otherwise nothing
+   * changes and the offer stays.
+   */
+  async function rewarded(grant: () => boolean): Promise<void> {
+    if (adPlaying) return;
+    adPlaying = true;
+    platform.gameplayStop();
+    const outcome = await platform.showRewardedAd();
+    adPlaying = false;
+    if (game.phase === 'playing') platform.gameplayStart();
+    if (outcome === 'rewarded') {
+      grant();
+      return;
+    }
+    if (outcome === 'adblock') toast('The ad could not play (is an ad blocker on?). Nothing was used up.', 3500);
+    else if (outcome !== 'disabled') toast('No ad is available right now. Try again in a little while.', 3000);
+  }
+
+  /** Between games (game over / victory -> next game) is the only place for a midgame ad. */
+  async function nextGame(): Promise<void> {
+    if (adPlaying) return;
+    adPlaying = true;
+    await platform.showMidgameAd();
+    adPlaying = false;
+    startGame();
+  }
+  platform.onAdsEnabledChange((on) => hud.setAdsEnabled(on));
+  hud.setAdsEnabled(platform.adsEnabled());
 
   function startGame(): void {
     scene.remove(view.root);
@@ -218,7 +265,7 @@ async function boot(): Promise<void> {
     const realDt = timer.getDelta();
     const dt = Math.min(0.05, realDt);
     if (!paused && document.visibilityState === 'visible') graphics.sampleFrame(realDt * 1000);
-    const gdt = paused ? 0 : dt;
+    const gdt = paused || adPlaying ? 0 : dt;
     time += gdt;
     game.advance(gdt);
     rig.update(dt);

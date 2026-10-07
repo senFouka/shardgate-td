@@ -224,3 +224,16 @@ html, body { margin: 0; height: 100%; background: #0b0a08; overflow: hidden; tou
   .hud-diff-btn { min-width: 96px; min-height: 44px; padding: 2px 8px; font-size: 12px; justify-content: flex-start; }
   .hud-diff-label { display: none; }
 }
+
+/* ------------------------------------------------------------- ads */
+.hud-ad-btn { gap: 8px; }
+.hud-ad-btn[hidden] { display: none !important; }
+.hud-ad-icon { width: 22px; height: 22px; flex: none; }
+.hud-refill { min-height: 52px; font-size: 14px; border-color: #c9a466; }
+.hud-pick-reroll { min-height: 48px; font-size: 13px; }
+.hud-continue { min-width: 220px; min-height: 56px; background: linear-gradient(#3a6a3a, #24452a); border-color: #8fd68f; }
+@media (max-width: 760px), (max-height: 480px) {
+  .hud-refill span { display: none; }
+  .hud-refill { min-width: 52px; min-height: 44px; padding: 4px 10px; }
+  .hud-pick-reroll { min-height: 64px; max-width: 110px; white-space: normal; font-size: 12px; line-height: 1.2; flex-direction: column; gap: 2px; }
+}

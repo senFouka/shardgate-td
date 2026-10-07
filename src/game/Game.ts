@@ -149,7 +149,9 @@ export type GameEvent =
   | { type: 'summon'; element: ElementId; creep: Creep }
   /** an element was unlocked (level 1) or levelled up */
   | { type: 'element'; element: ElementId; level: number }
-  | { type: 'over'; won: boolean; wave: number };
+  | { type: 'over'; won: boolean; wave: number }
+  /** the player continued after a loss (rewarded ad) */
+  | { type: 'continue' };
 
 export type Phase = 'ready' | 'playing' | 'won' | 'lost';
 export type BuildError = 'not-grass' | 'occupied' | 'gold' | 'over' | 'max' | 'locked' | 'busy';
@@ -191,6 +193,10 @@ export class Game {
   /** picks earned but not made yet */
   private picksOwed = 0;
   private picksMade = 0;
+  /** rewarded-ad helps, each once (see CLAUDE.md "Ads") */
+  private offerRerolled = false;
+  private livesRefilled = false;
+  private continued = false;
   private rng: number;
   private readonly listeners: Array<(e: GameEvent) => void> = [];
 
@@ -311,6 +317,59 @@ export class Game {
     return this.creeps.some((c) => c.alive && c.elementBoss === el);
   }
 
+  /** Lives this game started with (the difficulty's). */
+  get maxLives(): number {
+    return this.diff.lives;
+  }
+
+  /* --------------------------------------------- rewarded-ad helps (rules) */
+
+  /** A fresh offer for the waiting pick may be had once per pick (rewarded ad). */
+  get canRerollOffer(): boolean {
+    return !!this.offer && !this.offerRerolled && this.phase !== 'won' && this.phase !== 'lost';
+  }
+
+  /** Swaps the three offered elements for three others where possible. */
+  rerollOffer(): boolean {
+    if (!this.canRerollOffer) return false;
+    const old = this.offer!;
+    const fresh = ELEMENT_ORDER.filter((e) => !old.includes(e));
+    const out: ElementId[] = [];
+    while (out.length < 3 && fresh.length) out.push(fresh.splice(Math.floor(this.random() * fresh.length), 1)[0]);
+    this.offer = out.length === 3 ? out : this.makeOffer();
+    this.offerRerolled = true;
+    this.emit({ type: 'offer', offer: this.offer });
+    return true;
+  }
+
+  /** Lives back to full, once per game, while a game runs and lives are missing (rewarded ad). */
+  get canRefillLives(): boolean {
+    return !this.livesRefilled && this.phase === 'playing' && this.lives < this.maxLives;
+  }
+
+  refillLives(): boolean {
+    if (!this.canRefillLives) return false;
+    this.livesRefilled = true;
+    this.lives = this.maxLives;
+    this.emit({ type: 'lives', lives: this.lives });
+    return true;
+  }
+
+  /** After a loss, once per game: the current wave goes on with half lives (rewarded ad). */
+  get canContinue(): boolean {
+    return this.phase === 'lost' && !this.continued;
+  }
+
+  continueGame(): boolean {
+    if (!this.canContinue) return false;
+    this.continued = true;
+    this.phase = 'playing';
+    this.lives = Math.max(1, Math.ceil(this.maxLives / 2));
+    this.emit({ type: 'lives', lives: this.lives });
+    this.emit({ type: 'continue' });
+    return true;
+  }
+
   /** True when the next pick unlocks at once (the first pick of a game). */
   get pickIsFree(): boolean {
     return this.picksMade === 0;
@@ -328,6 +387,7 @@ export class Game {
     const free = this.pickIsFree;
     this.picksOwed--;
     this.picksMade++;
+    this.offerRerolled = false;
     this.offer = this.picksOwed > 0 ? this.makeOffer() : null;
     this.emit({ type: 'offer', offer: this.offer });
     if (free) this.grantElement(el);

@@ -83,6 +83,11 @@ Slices merged into main; direction B (Phaser + baked sprites) removed.
 - [x] No element pick before wave 5; the wave-5 pick unlocks at once, later picks summon guardians.
 - [x] Harder (user reached wave 30 on Extreme easily): hp Easy 0.85 / Medium 1.3 / Hard 2.0 / Extreme 2.9 (bosses 0.85/1.3/1.9/2.6), Extreme 12 lives, less kill gold on Hard/Extreme. Bots (5 games): Easy all win; Medium planner 5/5, counter-bot 2/5, newbie w33-35; Hard planner w13-26, counter-bot 1/5; Extreme bots w8-15. The bots play worse than the user, so these are relative numbers.
 
+## Ads (user request 2026-10-08, part of Milestone 5)
+- [x] Rewarded, by player choice only, each with a play-button badge: "Other elements" on the pick panel (once per pick), "Refill lives" next to the wave chip (once per game, shown at 60% lives or less), "Continue with N lives" on the defeat screen (once per game, half lives, the wave goes on). The reward is granted only on `rewarded`; ad blocker / no fill show a toast and use nothing up. The game holds still while an ad plays.
+- [x] Midgame ad only between games: Play again / a difficulty on the end screen. Never during a wave or before the first wave.
+- [x] Hidden when ads are off (VITE_ADS=off build, or the SDK reports Basic Launch). Tested in Chrome with the CrazyGames SDK local demo ads (about 5 s each); 3 rule tests in `tests/ads.test.ts`.
+
 ## Notes for the proposal (1b)
 A throwaway sim (not in the repo) compared, at equal tower counts, a
 "gauntlet" (towers hugging the straight path) with a comb maze on the

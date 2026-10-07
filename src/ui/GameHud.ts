@@ -40,6 +40,9 @@ const TOWER_INFO: Record<TowerId, { name: string; blurb: string; icon: string }>
   ) as Record<ElementId, { name: string; blurb: string; icon: string }>),
 };
 
+/** "Watch an ad" badge: a small play button. */
+const AD_ICON = '<svg class="hud-ad-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="3" fill="#f2c14b"/><path d="M10 9v6l5-3z" fill="#1b150f"/></svg>';
+
 export function elementIcon(e: ElementId): string {
   return svg(ELEMENT_ICONS[e], ELEMENTS[e].color);
 }
@@ -55,6 +58,10 @@ export interface HudHooks {
   /** a new game on this difficulty (only offered before the first wave and on the end screen) */
   onDifficulty(d: DifficultyId): void;
   onCloseTower(): void;
+  /** rewarded ads (the player's choice; hidden when ads are off) */
+  onAdReroll(): void;
+  onAdRefill(): void;
+  onAdContinue(): void;
   onRestart(): void;
 }
 
@@ -67,6 +74,9 @@ export class GameHud {
   private readonly armor = el('span', { class: 'hud-armor' });
   private readonly interest = el('span', { class: 'hud-sub' });
   private readonly waveBtn = el('button', { class: 'ui-btn hud-wave-btn', type: 'button' });
+  private readonly refillBtn = el('button', { class: 'ui-btn hud-ad-btn hud-refill', type: 'button', hidden: '', title: 'Watch an ad to refill your lives (once per game)' });
+  /** false when the platform has ads switched off: every ad offer is hidden */
+  private adsOn = true;
   private readonly diffTag = el('span', { class: 'hud-diff-tag' });
   private readonly diffRow = el('div', { class: 'hud-diff', role: 'group', 'aria-label': 'Difficulty' });
   private readonly bar = el('div', { class: 'hud-build' });
@@ -86,8 +96,11 @@ export class GameHud {
       chip('<svg viewBox="0 0 24 24"><path fill="#e2475b" d="M12 21s-7.5-4.6-9.4-9.4C1.2 8 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.8 3.5 4.4 7.1C19.5 16.4 12 21 12 21z"/></svg>', this.lives),
       chip('<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="#f2c14b" stroke="#a8761c" stroke-width="1.5"/><path d="M9 12h6M12 9v6" stroke="#a8761c" stroke-width="1.6"/></svg>', this.gold, this.interest),
       chip('<svg viewBox="0 0 24 24" fill="none" stroke="#9fc8ff" stroke-width="1.8"><path d="M3 12c3-4 6-4 9 0s6 4 9 0"/><path d="M3 17c3-4 6-4 9 0s6 4 9 0" opacity=".5"/></svg>', el('div', { class: 'hud-wave-line' }, [this.wave, this.diffTag]), this.waveName, this.armor),
+      this.refillBtn,
       this.waveBtn,
     ]);
+    this.refillBtn.innerHTML = `${AD_ICON}<span>Refill lives</span>`;
+    this.refillBtn.addEventListener('click', () => this.hooks.onAdRefill());
     this.waveBtn.addEventListener('click', () => this.game.callWave());
     uiRoot().append(top, this.diffRow, this.bar, this.picker, this.panel, this.end);
     window.addEventListener('keydown', (e) => {
@@ -120,6 +133,12 @@ export class GameHud {
     this.showTower(null);
     this.pick(null);
     this.update();
+  }
+
+  setAdsEnabled(on: boolean): void {
+    this.adsOn = on;
+    this.offerKey = '-';
+    if (!this.end.hidden) this.end.querySelector<HTMLElement>('.hud-continue')?.toggleAttribute('hidden', !on);
   }
 
   get pickedTower(): TowerId | null {
@@ -163,7 +182,7 @@ export class GameHud {
   private refreshPicker(): void {
     const g = this.game;
     const offer = g.offer;
-    const key = offer ? offer.join(',') + g.pickIsFree : '';
+    const key = offer ? offer.join(',') + g.pickIsFree + g.canRerollOffer : '';
     if (key === this.offerKey) return;
     this.offerKey = key;
     this.picker.hidden = !offer;
@@ -184,6 +203,10 @@ export class GameHud {
     });
     const random = el('button', { class: 'ui-btn hud-pick-random', type: 'button', text: `Random element  +${BALANCE.elements.randomGold} gold` });
     random.addEventListener('click', () => this.hooks.onPickElement('random'));
+    const reroll = el('button', { class: 'ui-btn hud-ad-btn hud-pick-reroll', type: 'button', title: 'Watch an ad for three other elements (once per pick)' });
+    reroll.innerHTML = `${AD_ICON}<span>Other elements</span>`;
+    reroll.addEventListener('click', () => this.hooks.onAdReroll());
+    reroll.hidden = !this.adsOn || !g.canRerollOffer;
     this.picker.replaceChildren(
       el('div', { class: 'hud-pick-title', text: 'Choose an element' }),
       el('p', {
@@ -192,6 +215,7 @@ export class GameHud {
       }),
       ...cards,
       random,
+      reroll,
     );
   }
 
@@ -301,7 +325,15 @@ export class GameHud {
     });
   }
 
+  hideEnd(): void {
+    this.end.hidden = true;
+  }
+
   showEnd(won: boolean, wave: number): void {
+    const cont = el('button', { class: 'ui-btn hud-ad-btn hud-continue', type: 'button' });
+    cont.innerHTML = `${AD_ICON}<span>Continue with ${Math.ceil(this.game.maxLives / 2)} lives</span>`;
+    cont.addEventListener('click', () => this.hooks.onAdContinue());
+    cont.hidden = won || !this.adsOn || !this.game.canContinue;
     const again = el('button', { class: 'ui-btn hud-again', type: 'button', text: `Play again (${DIFFICULTY_NAMES[this.game.difficulty]})` });
     again.addEventListener('click', () => this.hooks.onRestart());
     const other = el('div', { class: 'hud-end-diff' }, [el('span', { class: 'ui-note', text: 'or start a new game on' }), ...this.difficultyButtons(this.game.difficulty)]);
@@ -311,6 +343,7 @@ export class GameHud {
         el('h2', { text: won ? 'The Shardgate holds!' : 'The Shardgate has fallen' }),
         el('p', { class: 'ui-note', text: won ? `All ${wave} waves defeated on ${DIFFICULTY_NAMES[this.game.difficulty]}.` : `You reached wave ${wave} of ${BALANCE.waves.count} on ${DIFFICULTY_NAMES[this.game.difficulty]}.` }),
         el('p', { class: 'ui-note', text: `Enemies defeated by your towers still standing: ${kills}` }),
+        cont,
         again,
         other,
       ]),
@@ -358,6 +391,8 @@ export class GameHud {
     } else {
       this.waveBtn.hidden = true;
     }
+    // offered once lives run low, never pushed: the player decides
+    this.refillBtn.hidden = !this.adsOn || !g.canRefillLives || g.lives > g.maxLives * 0.6;
     this.refreshBar();
     this.refreshPicker();
     for (const [k, b] of this.buildBtns) b.classList.toggle('poor', g.gold < towerStats(k, 1).cost);
