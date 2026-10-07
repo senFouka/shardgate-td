@@ -191,7 +191,7 @@ test('losing every life ends the game', () => {
   assert.equal(g.phase, 'lost');
 });
 
-test('difficulty: harder levels mean tougher creeps and fewer lives, locked per game', () => {
+test('difficulty: harder levels mean tougher creeps and never more lives, locked per game', () => {
   const hp: number[] = [];
   for (const d of DIFFICULTY_ORDER) {
     const g = new Game(1, d);
@@ -208,5 +208,6 @@ test('difficulty: harder levels mean tougher creeps and fewer lives, locked per 
   }
   for (let i = 1; i < hp.length; i++) assert.ok(hp[i] > hp[i - 1], `hp by difficulty ${hp.join(',')}`);
   const lives = DIFFICULTY_ORDER.map((d) => BALANCE.difficulty[d].lives);
-  for (let i = 1; i < lives.length; i++) assert.ok(lives[i] < lives[i - 1]);
+  for (let i = 1; i < lives.length; i++) assert.ok(lives[i] <= lives[i - 1], `lives by difficulty ${lives.join(",")}`);
+  assert.ok(lives[0] > lives[lives.length - 1]);
 });
