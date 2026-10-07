@@ -1,0 +1,660 @@
+[
+  {
+    "id": "big_alien",
+    "file": "big_alien.glb",
+    "pack": "quaternius-ultimate-monsters/Big",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 3.52,
+    "kind": "ground",
+    "sizeKB": 188
+  },
+  {
+    "id": "big_bluedemon",
+    "file": "big_bluedemon.glb",
+    "pack": "quaternius-ultimate-monsters/Big",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.83,
+    "kind": "ground",
+    "sizeKB": 159
+  },
+  {
+    "id": "big_bunny",
+    "file": "big_bunny.glb",
+    "pack": "quaternius-ultimate-monsters/Big",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 3.43,
+    "kind": "ground",
+    "sizeKB": 211
+  },
+  {
+    "id": "big_cactoro",
+    "file": "big_cactoro.glb",
+    "pack": "quaternius-ultimate-monsters/Big",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 3.92,
+    "kind": "ground",
+    "sizeKB": 173
+  },
+  {
+    "id": "big_demon",
+    "file": "big_demon.glb",
+    "pack": "quaternius-ultimate-monsters/Big",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 3.08,
+    "kind": "ground",
+    "sizeKB": 186
+  },
+  {
+    "id": "big_dino",
+    "file": "big_dino.glb",
+    "pack": "quaternius-ultimate-monsters/Big",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 3.18,
+    "kind": "ground",
+    "sizeKB": 147
+  },
+  {
+    "id": "big_fish",
+    "file": "big_fish.glb",
+    "pack": "quaternius-ultimate-monsters/Big",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 3.7,
+    "kind": "ground",
+    "sizeKB": 172
+  },
+  {
+    "id": "big_frog",
+    "file": "big_frog.glb",
+    "pack": "quaternius-ultimate-monsters/Big",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.66,
+    "kind": "ground",
+    "sizeKB": 137
+  },
+  {
+    "id": "big_monkroose",
+    "file": "big_monkroose.glb",
+    "pack": "quaternius-ultimate-monsters/Big",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.94,
+    "kind": "ground",
+    "sizeKB": 157
+  },
+  {
+    "id": "big_mushroomking",
+    "file": "big_mushroomking.glb",
+    "pack": "quaternius-ultimate-monsters/Big",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 3.57,
+    "kind": "ground",
+    "sizeKB": 164
+  },
+  {
+    "id": "big_ninja",
+    "file": "big_ninja.glb",
+    "pack": "quaternius-ultimate-monsters/Big",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.97,
+    "kind": "ground",
+    "sizeKB": 168
+  },
+  {
+    "id": "big_yeti",
+    "file": "big_yeti.glb",
+    "pack": "quaternius-ultimate-monsters/Big",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.79,
+    "kind": "ground",
+    "sizeKB": 163
+  },
+  {
+    "id": "blob_alien",
+    "file": "blob_alien.glb",
+    "pack": "quaternius-ultimate-monsters/Blob",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 3.44,
+    "kind": "ground",
+    "sizeKB": 57
+  },
+  {
+    "id": "blob_birb",
+    "file": "blob_birb.glb",
+    "pack": "quaternius-ultimate-monsters/Blob",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.65,
+    "kind": "ground",
+    "sizeKB": 78
+  },
+  {
+    "id": "blob_cactoro",
+    "file": "blob_cactoro.glb",
+    "pack": "quaternius-ultimate-monsters/Blob",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 3.75,
+    "kind": "ground",
+    "sizeKB": 61
+  },
+  {
+    "id": "blob_cat",
+    "file": "blob_cat.glb",
+    "pack": "quaternius-ultimate-monsters/Blob",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.14,
+    "kind": "ground",
+    "sizeKB": 48
+  },
+  {
+    "id": "blob_chicken",
+    "file": "blob_chicken.glb",
+    "pack": "quaternius-ultimate-monsters/Blob",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.54,
+    "kind": "ground",
+    "sizeKB": 64
+  },
+  {
+    "id": "blob_fish",
+    "file": "blob_fish.glb",
+    "pack": "quaternius-ultimate-monsters/Blob",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.81,
+    "kind": "ground",
+    "sizeKB": 71
+  },
+  {
+    "id": "blob_greenblob",
+    "file": "blob_greenblob.glb",
+    "pack": "quaternius-ultimate-monsters/Blob",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.01,
+    "kind": "ground",
+    "sizeKB": 36
+  },
+  {
+    "id": "blob_greenspikyblob",
+    "file": "blob_greenspikyblob.glb",
+    "pack": "quaternius-ultimate-monsters/Blob",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 4.16,
+    "kind": "ground",
+    "sizeKB": 100
+  },
+  {
+    "id": "blob_mushnub",
+    "file": "blob_mushnub.glb",
+    "pack": "quaternius-ultimate-monsters/Blob",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 3.39,
+    "kind": "ground",
+    "sizeKB": 31
+  },
+  {
+    "id": "blob_mushnub_evolved",
+    "file": "blob_mushnub_evolved.glb",
+    "pack": "quaternius-ultimate-monsters/Blob",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 4.6,
+    "kind": "ground",
+    "sizeKB": 73
+  },
+  {
+    "id": "blob_ninja",
+    "file": "blob_ninja.glb",
+    "pack": "quaternius-ultimate-monsters/Blob",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.86,
+    "kind": "ground",
+    "sizeKB": 52
+  },
+  {
+    "id": "blob_pigeon",
+    "file": "blob_pigeon.glb",
+    "pack": "quaternius-ultimate-monsters/Blob",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 1.96,
+    "kind": "ground",
+    "sizeKB": 50
+  },
+  {
+    "id": "blob_pinkblob",
+    "file": "blob_pinkblob.glb",
+    "pack": "quaternius-ultimate-monsters/Blob",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.11,
+    "kind": "ground",
+    "sizeKB": 28
+  },
+  {
+    "id": "blob_wizard",
+    "file": "blob_wizard.glb",
+    "pack": "quaternius-ultimate-monsters/Blob",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.73,
+    "kind": "ground",
+    "sizeKB": 43
+  },
+  {
+    "id": "blob_yeti",
+    "file": "blob_yeti.glb",
+    "pack": "quaternius-ultimate-monsters/Blob",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walk",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.56,
+    "kind": "ground",
+    "sizeKB": 54
+  },
+  {
+    "id": "fly_alpaking",
+    "file": "fly_alpaking.glb",
+    "pack": "quaternius-ultimate-monsters/Flying",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Fast_Flying",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.56,
+    "kind": "flying",
+    "sizeKB": 66
+  },
+  {
+    "id": "fly_alpaking_evolved",
+    "file": "fly_alpaking_evolved.glb",
+    "pack": "quaternius-ultimate-monsters/Flying",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Fast_Flying",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 3.28,
+    "kind": "flying",
+    "sizeKB": 122
+  },
+  {
+    "id": "fly_armabee",
+    "file": "fly_armabee.glb",
+    "pack": "quaternius-ultimate-monsters/Flying",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Fast_Flying",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.35,
+    "kind": "flying",
+    "sizeKB": 64
+  },
+  {
+    "id": "fly_armabee_evolved",
+    "file": "fly_armabee_evolved.glb",
+    "pack": "quaternius-ultimate-monsters/Flying",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Fast_Flying",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.25,
+    "kind": "flying",
+    "sizeKB": 85
+  },
+  {
+    "id": "fly_demon",
+    "file": "fly_demon.glb",
+    "pack": "quaternius-ultimate-monsters/Flying",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Fast_Flying",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.46,
+    "kind": "flying",
+    "sizeKB": 130
+  },
+  {
+    "id": "fly_dragon",
+    "file": "fly_dragon.glb",
+    "pack": "quaternius-ultimate-monsters/Flying",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Fast_Flying",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.37,
+    "kind": "flying",
+    "sizeKB": 112
+  },
+  {
+    "id": "fly_dragon_evolved",
+    "file": "fly_dragon_evolved.glb",
+    "pack": "quaternius-ultimate-monsters/Flying",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Fast_Flying",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 3.06,
+    "kind": "flying",
+    "sizeKB": 185
+  },
+  {
+    "id": "fly_ghost",
+    "file": "fly_ghost.glb",
+    "pack": "quaternius-ultimate-monsters/Flying",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Fast_Flying",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 3.21,
+    "kind": "flying",
+    "sizeKB": 88
+  },
+  {
+    "id": "fly_ghost_skull",
+    "file": "fly_ghost_skull.glb",
+    "pack": "quaternius-ultimate-monsters/Flying",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Fast_Flying",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 3.25,
+    "kind": "flying",
+    "sizeKB": 102
+  },
+  {
+    "id": "fly_glub",
+    "file": "fly_glub.glb",
+    "pack": "quaternius-ultimate-monsters/Flying",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Fast_Flying",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.99,
+    "kind": "flying",
+    "sizeKB": 68
+  },
+  {
+    "id": "fly_glub_evolved",
+    "file": "fly_glub_evolved.glb",
+    "pack": "quaternius-ultimate-monsters/Flying",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Fast_Flying",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 3.8,
+    "kind": "flying",
+    "sizeKB": 104
+  },
+  {
+    "id": "fly_goleling",
+    "file": "fly_goleling.glb",
+    "pack": "quaternius-ultimate-monsters/Flying",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Fast_Flying",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.32,
+    "kind": "flying",
+    "sizeKB": 96
+  },
+  {
+    "id": "fly_goleling_evolved",
+    "file": "fly_goleling_evolved.glb",
+    "pack": "quaternius-ultimate-monsters/Flying",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Fast_Flying",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 3.09,
+    "kind": "flying",
+    "sizeKB": 141
+  },
+  {
+    "id": "fly_hywirl",
+    "file": "fly_hywirl.glb",
+    "pack": "quaternius-ultimate-monsters/Flying",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Fast_Flying",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.84,
+    "kind": "flying",
+    "sizeKB": 87
+  },
+  {
+    "id": "fly_squidle",
+    "file": "fly_squidle.glb",
+    "pack": "quaternius-ultimate-monsters/Flying",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Fast_Flying",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 2.64,
+    "kind": "flying",
+    "sizeKB": 128
+  },
+  {
+    "id": "fly_tribal",
+    "file": "fly_tribal.glb",
+    "pack": "quaternius-ultimate-monsters/Flying",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Fast_Flying",
+      "death": "Death",
+      "hit": "HitReact"
+    },
+    "height": 4.32,
+    "kind": "flying",
+    "sizeKB": 140
+  },
+  {
+    "id": "skel_minion",
+    "file": "skel_minion.glb",
+    "pack": "kaykit-character-pack-skeletons",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walking_A",
+      "death": "Death_A",
+      "hit": "Hit_A"
+    },
+    "height": 2.14,
+    "kind": "ground",
+    "sizeKB": 217
+  },
+  {
+    "id": "skel_warrior",
+    "file": "skel_warrior.glb",
+    "pack": "kaykit-character-pack-skeletons",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walking_A",
+      "death": "Death_A",
+      "hit": "Hit_A"
+    },
+    "height": 2.56,
+    "kind": "ground",
+    "sizeKB": 243
+  },
+  {
+    "id": "skel_rogue",
+    "file": "skel_rogue.glb",
+    "pack": "kaykit-character-pack-skeletons",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walking_A",
+      "death": "Death_A",
+      "hit": "Hit_A"
+    },
+    "height": 2.28,
+    "kind": "ground",
+    "sizeKB": 225
+  },
+  {
+    "id": "skel_mage",
+    "file": "skel_mage.glb",
+    "pack": "kaykit-character-pack-skeletons",
+    "license": "CC0-1.0",
+    "clips": {
+      "move": "Walking_A",
+      "death": "Death_A",
+      "hit": "Hit_A"
+    },
+    "height": 2.6,
+    "kind": "ground",
+    "sizeKB": 193
+  }
+]

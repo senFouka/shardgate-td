@@ -1,0 +1,23 @@
+{
+  "name": "shardgate-td",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "build:basic": "tsc --noEmit && vite build --mode basic",
+    "preview": "vite preview",
+    "test": "node --test \"tests/**/*.test.ts\"",
+    "slices": "vite --config slices/vite.config.ts",
+    "slices:build": "tsc --noEmit -p slices && vite build --config slices/vite.config.ts"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@types/three": "^0.186.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.0"
+  }
+}

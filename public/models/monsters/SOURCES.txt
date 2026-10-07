@@ -1,0 +1,66 @@
+Shardgate TD - creep models (public/models/monsters). Prepared 2026-10-07.
+All files are glTF 2.0 binary (.glb), Y-up, ground creeps stand on y=0 (flying ones hover above y=0 as authored).
+Each GLB is self-contained (no external URIs). No Draco / Meshopt. Geometry uses KHR_mesh_quantization
+(core three.js GLTFLoader support, no decoder needed). Index of all models: catalog.json.
+
+=====================================================================
+1) Quaternius "Ultimate Monsters"  (43 models: big_*, blob_*, fly_*)
+=====================================================================
+Author: Quaternius (https://quaternius.com)
+Pack page: https://quaternius.com/packs/ultimatemonsters.html  (pack page license: CC0)
+Official download: Google Drive folder https://drive.google.com/drive/folders/18m4KpzpEzhC9wl7jzr6dUc0N8Jozr79C
+  License.txt in that folder (copied here as License_Quaternius_UltimateMonsters.txt):
+    "License: CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
+     https://creativecommons.org/publicdomain/zero/1.0/"
+  quaternius.com/license.html now also shows the "Quaternius Asset License (QAL) v1.0" (8/28/2026): commercial games
+  allowed, no credit required, no redistribution of the assets as assets. Copy: Quaternius_Asset_License_v1.0.txt.
+
+Where the files came from:
+  - big_yeti, big_demon, big_bluedemon, big_mushroomking: from the official Google Drive glTF files (Big/glTF), downloaded 2026-10-06.
+  - all other Quaternius models: on 2026-10-07 Google Drive refused every download from that folder
+    ("Too many users have viewed or downloaded this file recently", downloadQuotaExceeded). They were taken instead from
+    Quaternius's own official upload of the same pack on Poly Pizza:
+      Bundle "Ultimate Monsters Bundle" by user Quaternius: https://poly.pizza/bundle/Ultimate-Monsters-Bundle-5oyGWAmOB6
+      Bundle description (verbatim): "50 Monsters with attack, death, running, walking, and many more animations.
+        In .FBX, and glTF formats. Free to use in any project, even commercially! (CC0)"
+      Every model page used shows uploader "Quaternius" and Licence "CC0 1.0", uploaded 2022-10-23, e.g.
+        https://poly.pizza/m/3rUm1cN3yp (Dragon), https://poly.pizza/m/IoWG5F9WUc (Green Spiky Blob),
+        https://poly.pizza/m/TX8r9WBXpe (Ghost Skull), https://poly.pizza/m/j4rVPvxyLg (Monkroose), https://poly.pizza/m/LWKmS30Xxl (Mushnub)
+      CC0 -> no attribution required (credit "Quaternius" optional).
+    Geometry and animations are identical to the Drive glTF (same triangle counts, same clips); the Poly Pizza files use
+    per-material colors instead of the Drive palette texture, so colors were brightened x1.28 (linear) to match the Drive atlas.
+  Poly Pizza model ids used (file <- poly.pizza/m/<id>):
+    big_alien RRliSQBP7r, big_bunny irZjWFARyl, big_cactoro IGn9lhdama, big_dino wuerCFCWNR, big_fish ypEYhCImAB,
+    big_frog 37wofOCOzG, big_monkroose j4rVPvxyLg, big_ninja xGYmeDpfTu,
+    blob_alien sUTLXji0aL, blob_birb gZ2ExU9OAB, blob_cactoro 66CYX5UhRK, blob_cat 2f54vbV0In, blob_chicken ineV9pU5VL,
+    blob_fish 7V4gaDMQV8, blob_greenblob y4kJh8EeYS, blob_greenspikyblob IoWG5F9WUc, blob_mushnub LWKmS30Xxl,
+    blob_mushnub_evolved 0SZyA6MV51, blob_ninja mCNoqcqpvC, blob_pigeon 9NGlBTpDEr, blob_pinkblob AyP8sQmDLh ("Pink Slime"),
+    blob_wizard o87Upt5uHX, blob_yeti S1E7idPFhe,
+    fly_alpaking AQ8zbFoDln, fly_alpaking_evolved UdJudob66v, fly_armabee 42djT5zJnx, fly_armabee_evolved GcttdvsqsQ,
+    fly_demon Mo2ky6vkf8, fly_dragon 3rUm1cN3yp, fly_dragon_evolved LlwD0QNUPj, fly_ghost Iip30bDHmu, fly_ghost_skull TX8r9WBXpe,
+    fly_glub x59pqJscry, fly_glub_evolved Z9lddNpM1M, fly_goleling 71gomWolax, fly_goleling_evolved iHEuXiH6Aj,
+    fly_hywirl zjr7CmWGER, fly_squidle 54QyRcsogk, fly_tribal t91lDHaqRW
+  Excluded on purpose: Orc, Orc_Skull (Big) and the Blob Orc ("Orc Enemy").
+  Not obtainable on 2026-10-07 (only on Google Drive, which was over quota): Big/Birb, Big/Tribal, Blob/Dog, Flying/Pigeon.
+
+=====================================================================
+2) KayKit "Character Pack: Skeletons" 1.0  (skel_minion, skel_warrior, skel_rogue, skel_mage)
+=====================================================================
+Author: Kay Lousberg (www.kaylousberg.com)
+Source: https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Skeletons-1.0
+        addons/kaykit_character_pack_skeletons/Characters/gltf/Skeleton_{Minion,Warrior,Rogue,Mage}.glb
+LICENSE.txt (copied here as LICENSE_KayKit_Skeletons.txt): "License: (Creative Commons Zero, CC0)
+  http://creativecommons.org/publicdomain/zero/1.0/  This content is free to use in personal, educational and
+  commercial projects. Support me by crediting Kay Lousberg, www.kaylousberg.com (this is not mandatory)"
+Weapons/shields are not included in these files (attach the existing kaykit-skeletons weapon GLBs to bones handslot.r / handslot.l).
+
+=====================================================================
+Processing (scripts in the dev scratchpad, not shipped)
+=====================================================================
+gltf-transform 4 + sharp: keep only the move / death / hit clips (CharacterArmature| prefix stripped,
+Blob "HitRecieve" renamed to "HitReact"), resample keyframes, drop animation channels that only hold the rest pose,
+Quaternius: colors baked to vertex colors (COLOR_0) with one shared PBR material (metal 0, rough 1), no texture,
+1 draw call per model; KayKit: 1024px texture reduced to an embedded 256px palette PNG (5 KB), body parts merged per material.
+Quantization: POSITION 14-bit, NORMAL 8-bit, WEIGHTS 8-bit (KHR_mesh_quantization).
+Verified with three.js 0.186 GLTFLoader in Node: all files load, every animation track binds to a scene node,
+animated bounds match the source files.

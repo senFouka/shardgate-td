@@ -1,0 +1,35 @@
+Shardgate TD - asset sources (downloaded 2026-10-06). All GLB, glTF 2.0, Y-up, meters-ish units.
+
+kenney-tower-defense-kit/  <- Kenney "Tower Defense Kit" 2.1  https://kenney.nl/assets/tower-defense-kit
+  zip: https://kenney.nl/media/pages/assets/tower-defense-kit/a402493eaa-1726471567/kenney_tower-defense-kit.zip
+  License.txt (in zip): "License: (Creative Commons Zero, CC0)"
+  Full pack (16.7 MB unzipped, 821 files, GLB/FBX/OBJ): square path tiles (straight/corner/split/crossing/end/spawn/river/hill/slope/wide), snow variants of all tiles+details,
+  modular round & square towers (base/bottom/middle/top/roof a-c + build-up stages), weapons (ballista/cannon/catapult/turret + ammo), 4 UFO enemies (sci-fi), wood structures, crystals/rocks/trees details.
+  KEPT: tiles (no river/wide/slope), detail-*, snow-detail-*, snow-tile, spawn-*, selection-*, tower-round-*, tower-square-* (no build stages), weapon-ammo-boulder. GLBs reference Textures/colormap.png (keep folder layout).
+
+kenney-castle-kit/  <- Kenney "Castle Kit" 2.0  https://kenney.nl/assets/castle-kit
+  zip: https://kenney.nl/media/pages/assets/castle-kit/a395102d20-1711543616/kenney_castle-kit.zip   License: CC0
+  Full pack (6.8 MB, 406 files): walls, gates, modular square/hexagon towers, siege engines, bridges, flags, rocks, trees. KEPT: gates, wall pieces, tower pieces, flags, rocks. External Textures/colormap.png.
+
+kenney-nature-kit/  <- Kenney "Nature Kit" 2.1  https://kenney.nl/assets/nature-kit
+  zip: https://kenney.nl/media/pages/assets/nature-kit/37ac38a37b-1677698939/kenney_nature-kit.zip   License: CC0
+  Full pack (29 MB, 330 models x GLB/FBX/OBJ/DAE/STL): rocks/stones, cliffs, trees (incl. autumn/snow-less), bushes, grass, flowers, mushrooms, path/river ground tiles, bridges, camp props, tents.
+  KEPT: ~50 rocks/trees/bushes/grass/flowers/path tiles. Material colors only, no textures.
+
+kaykit-medieval-hexagon/  <- KayKit "Medieval Hexagon Pack" 1.0 by Kay Lousberg
+  https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0  (also kaylousberg.itch.io)  LICENSE.txt: "License: (Creative Commons Zero, CC0)"
+  Full pack: hex tiles (grass/water/coast/river/road), buildings in blue/green/red/yellow (castle, towers A/B/base/catapult, houses, mills...), walls/gates/fences, nature (trees, rocks, hills, mountains, clouds), props.
+  KEPT (converted .gltf+.bin+png -> single GLB with embedded 15 KB palette texture via gltf-transform): tower_base/A/B + castle in red & blue, walls/gates, destroyed building, rocks, trees, hill, mountain, flags, tent, barrel, crate.
+
+kaykit-skeletons/  <- KayKit "Character Pack: Skeletons" 1.0 by Kay Lousberg
+  https://github.com/KayKit-Game-Assets/KayKit-Character-Pack-Skeletons-1.0   LICENSE.txt: "License: (Creative Commons Zero, CC0)"
+  Full pack: Skeleton_Mage/Minion/Rogue/Warrior (each 4.7 MB GLB with 95 animations), weapons/shields/arrows as glTF.
+  KEPT: Minion + Warrior trimmed to 12 clips (Walking_A, Walking_D_Skeletons, Running_A/B, Death_A/B, Death_C_Skeletons, Hit_A/B, Idle, Spawn_Ground_Skeletons, Taunt) -> ~0.8 MB each;
+  Skeleton_Blade/Axe/Shield_Large_A GLBs (attach to bones handslot.r / handslot.l).
+
+quaternius-ultimate-monsters/  <- Quaternius "Ultimate Monsters"  https://quaternius.com/packs/ultimatemonsters.html
+  Download: Google Drive folder https://drive.google.com/drive/folders/18m4KpzpEzhC9wl7jzr6dUc0N8Jozr79C (Big/Blob/Flying, each Blends/FBX/glTF/OBJ)
+  License.txt in Drive folder: "CC0 1.0 Universal (CC0 1.0) Public Domain Dedication". Pack page shows License: CC0.
+  NOTE: quaternius.com/license.html now shows "Quaternius Asset License (QAL) v1.0, last updated 8/28/2026" (commercial games OK, no credit, but no redistributing the assets as assets). Copy saved here.
+  Full pack: 45+ animated monsters (Big: Alien, Birb, BlueDemon, Bunny, Cactoro, Demon, Dino, Fish, Frog, Monkroose, MushroomKing, Ninja, Orc, Orc_Skull, Tribal, Yeti; Blob: ~17; Flying: ~?).
+  KEPT: Orc, Yeti, Demon, BlueDemon, MushroomKing (Big), converted .gltf (base64) -> GLB, trimmed to Walk, Run, Death, HitReact, Idle, Punch, Jump.
