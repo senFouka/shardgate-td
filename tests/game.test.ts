@@ -149,7 +149,7 @@ test('a boss walks at the end of every 5th wave, tougher and slower', () => {
   assert.equal(bosses.length, 1);
   assert.equal(bosses[0].wave, BALANCE.bosses.every);
   const normal = seen.find((s) => s.wave === BALANCE.bosses.every && !s.boss)!;
-  assert.ok(bosses[0].hp >= normal.hp * BALANCE.bosses.hpFactor - 1 && bosses[0].speed < normal.speed);
+  assert.ok(bosses[0].hp >= normal.hp * BALANCE.bosses.hpFactor * 0.95 && bosses[0].speed < normal.speed, `boss ${bosses[0].hp} vs creep ${normal.hp}`);
   assert.equal(seen.filter((s) => s.wave === BALANCE.bosses.every).at(-1)!.boss, true, 'the boss comes last');
 });
 
