@@ -51,6 +51,6 @@ Picked by the user on the audition page (2026-10-08). All **CC0 1.0**, licence r
 | victory | "Success Fanfare Trumpets", https://freesound.org/s/456966/ | FunWithSound | CC0 1.0 | trimmed to < 4 s |
 | denied | "Bonk Click w/deny feel", https://freesound.org/s/220210/ | GameAudio | CC0 1.0 | trimmed |
 | click | "Wooden Click", https://freesound.org/s/321083/ | BenjaminNelan | CC0 1.0 | trimmed |
-| boltShot, mortarFire, creepDeath | Kenney packs (www.kenney.nl), one of: RPG Audio, Impact Sounds, Interface Sounds, Sci-Fi Sounds, Digital Audio (exact source in `slices/audition/sounds/backup_v1` notes) | Kenney | CC0 1.0 (`License.txt` in each zip) | first set, waiting for the user's pick |
+| creepDeath | Kenney packs (www.kenney.nl), one of: RPG Audio, Impact Sounds, Interface Sounds, Sci-Fi Sounds, Digital Audio (exact source in `slices/audition/sounds/backup_v1` notes) | Kenney | CC0 1.0 (`License.txt` in each zip) | first set, waiting for the user's pick |
 
-Tower hits and shell blasts have no sound (user's choice).
+Tower shots, hits and shell blasts have no sound (user's choice).

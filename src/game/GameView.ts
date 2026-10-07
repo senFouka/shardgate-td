@@ -58,8 +58,8 @@ export class GameView {
     this.root.add(this.fxAdd.points, this.fxSmoke.points, this.range);
     game.on((e) => {
       // sounds for what happens on the battlefield
-      if (e.type === 'fire') sfx.play(LOUD.has(e.shot.tower.kind) ? 'mortarFire' : 'boltShot');
-      else if (e.type === 'death') sfx.play(e.creep.boss ? 'bossDeath' : 'creepDeath');
+      // tower shots and hits are silent (the user's choice)
+      if (e.type === 'death') sfx.play(e.creep.boss ? 'bossDeath' : 'creepDeath');
       else if (e.type === 'leak') sfx.play('leak');
       else if (e.type === 'build') sfx.play('build');
       else if (e.type === 'upgrade' || e.type === 'convert' || e.type === 'element') sfx.play('upgrade');
@@ -548,9 +548,6 @@ export class GameView {
     this.shake = Math.max(0, this.shake - dt * 0.3);
   }
 }
-
-/** Shots that sound heavy (lobbed shells, boulders). */
-const LOUD: ReadonlySet<TowerId> = new Set<TowerId>(['mortar', 'tide', 'stone']);
 
 /** An element UI colour as HDR particle RGB. */
 function hdr(el: ElementId, k: number): [number, number, number] {

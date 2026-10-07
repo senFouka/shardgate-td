@@ -1,8 +1,8 @@
 /**
  * Every sound effect in the game. Files live in `public/audio/`, each as an
  * `.ogg` plus an `.mp3` twin, all CC0 (see ASSETS.md). Picked by the user on
- * the audition page (2026-10-08). Hits and blasts have no sound by the
- * user's choice; shots and creep deaths still use the first Kenney set.
+ * the audition page (2026-10-08). Tower shots and hits have no sound by the
+ * user's choice; creep deaths still use the first Kenney set.
  */
 export interface SoundDef {
   file: string;
@@ -19,8 +19,6 @@ export interface SoundDef {
 const s = (name: string, volume: number, minGapMs: number, detune: number): SoundDef => ({ file: `audio/${name}.ogg`, volume, minGapMs, detune });
 
 export const SOUNDS = {
-  boltShot: s('boltShot', 0.22, 60, 150),
-  mortarFire: s('mortarFire', 0.35, 90, 100),
   creepDeath: s('creepDeath', 0.3, 45, 250),
   build: s('build', 0.5, 0, 80),
   upgrade: s('upgrade', 0.5, 0, 0),
