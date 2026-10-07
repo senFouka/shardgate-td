@@ -135,8 +135,8 @@ export const BALANCE = {
   difficulty: {
     easy: { startGold: 150, lives: 30, hp: 0.85, bossHp: 0.85, bounty: 1.15 },
     medium: { startGold: 100, lives: 20, hp: 1.3, bossHp: 1.3, bounty: 1 },
-    hard: { startGold: 100, lives: 15, hp: 2, bossHp: 1.9, bounty: 0.95 },
-    extreme: { startGold: 100, lives: 12, hp: 2.9, bossHp: 2.6, bounty: 0.85 },
+    hard: { startGold: 100, lives: 15, hp: 2, bossHp: 1.52, bounty: 0.95 },
+    extreme: { startGold: 100, lives: 12, hp: 2.9, bossHp: 2.08, bounty: 0.85 },
   } satisfies Record<DifficultyId, { startGold: number; lives: number; hp: number; bossHp: number; bounty: number }>,
   /**
    * Difficulty eases in: on wave 1 only `rampStart` of the hp/bossHp difference
