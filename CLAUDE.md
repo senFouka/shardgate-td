@@ -116,7 +116,7 @@ Element pick: on waves 5, 10, 15 … choose 1 of 3 offered elements, or take a *
 - First-time hints, no blocking tutorial: the first 30 seconds teach placement and path preview.
 
 ## Difficulty and meta
-- Difficulty per game: Easy / Medium / Hard (Extreme later). Locked per game.
+- Difficulty per game: Easy / Medium / Hard / Extreme (Extreme added at the user's request, 2026-10-08; Medium = the game as tuned before). Chosen before the first wave (or on the end screen), locked per game, remembered in ProfileSave. Harder levels ease in over the first waves so a game never ends before the player has built anything.
 - **Lifetime progress** (ProfileSave): best wave per difficulty, games won, element mastery (how often each element was picked in won games), cosmetic tower skins unlocked by achievements. Meta gives **variety and goals, not power**; this game stays skill-based.
 - Daily challenge (later): fixed seed, fixed elements, shared for the day.
 

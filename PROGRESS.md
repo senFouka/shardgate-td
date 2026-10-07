@@ -74,6 +74,10 @@ Slices merged into main; direction B (Phaser + baked sprites) removed.
 - [ ] Element-specific sounds (waiting for the user's audition picks), guardian models review, balance report for approval.
 - Audio round 2 (all CC0, OpenGameArt + Freesound): 8 music tracks, 64 SFX in `slices/audition/sounds/` (manifest2.json, SOURCES2.txt); waiting for the user's numbers. Log the chosen ones in ASSETS.md when they move to `public/audio`.
 
+## Difficulty (user request 2026-10-08)
+- [x] Easy / Medium / Hard / Extreme in `BALANCE.difficulty` (start gold, lives, creep/boss hp, kill gold), eased in over waves 1-19 (`difficultyRamp`). Selector before Start (desktop: row under the top bar; phone: column on the right) and on the end screen; tag in the wave chip; remembered in the profile; best wave per difficulty.
+- Bots (6 games each): Easy planner 6/6, newbie 6/6. Medium planner 6/6, newbie loses w37-40. Hard planner 3/6 (others w30-37), newbie w25-33. Extreme planner 0/6 (w10-40, median ~23), newbie w15-21. The planner bot now opens with 6 Bolts.
+
 ## Notes for the proposal (1b)
 A throwaway sim (not in the repo) compared, at equal tower counts, a
 "gauntlet" (towers hugging the straight path) with a comb maze on the

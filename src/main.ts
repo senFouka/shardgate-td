@@ -94,7 +94,7 @@ async function boot(): Promise<void> {
 
   /* ------------------------------------------------------------- game */
 
-  let game = new Game();
+  let game = new Game(undefined, profile.difficulty);
   let view = new GameView(game, creepModels, () => renderer.particleScale);
   scene.add(view.root);
 
@@ -127,6 +127,10 @@ async function boot(): Promise<void> {
     },
     onCloseTower: () => input.select(null),
     onRestart: () => startGame(),
+    onDifficulty: (d) => {
+      profile.setDifficulty(d);
+      startGame();
+    },
   });
   const input = new BuildInput(camera, canvas, rig, scene, new Particles(8, true), {
     onSelect: (t) => hud.showTower(t),
@@ -141,7 +145,7 @@ async function boot(): Promise<void> {
   function startGame(): void {
     scene.remove(view.root);
     view.reset();
-    game = new Game();
+    game = new Game(undefined, profile.difficulty);
     view = new GameView(game, creepModels, () => renderer.particleScale);
     view.setScale(renderer.bufferHeight(), camera.fov);
     scene.add(view.root);
@@ -151,7 +155,7 @@ async function boot(): Promise<void> {
       if (e.type === 'over') {
         platform.gameplayStop();
         hud.showEnd(e.won, e.wave);
-        profile.noteWave('medium', e.wave);
+        profile.noteWave(game.difficulty, e.wave);
       }
       if (e.type === 'wave-start' && e.wave > 1) profile.addWaveCleared();
       if (e.type === 'summon') toast(`${CREEP_LOOKS[e.creep.look]?.name ?? 'A guardian'} walks the road. ${game.elements[e.element] ? `Defeat it to raise ${ELEMENTS[e.element].name} to level ${game.elements[e.element] + 1}.` : `Defeat it to claim ${ELEMENTS[e.element].name}.`}`, 4500);

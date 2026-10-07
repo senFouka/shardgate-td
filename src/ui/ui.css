@@ -200,3 +200,27 @@ html, body { margin: 0; height: 100%; background: #0b0a08; overflow: hidden; tou
   .hud-tower.el { min-width: 64px; }
 }
 .hud-actions .ui-btn { white-space: nowrap; font-size: 14px; padding-inline: 8px; }
+
+/* -------------------------------------------------------- difficulty */
+.hud-diff { position: fixed; top: calc(76px + env(safe-area-inset-top, 0px)); left: 50%; transform: translateX(-50%); display: flex; justify-content: center; align-items: center; gap: 6px; }
+.hud-diff[hidden] { display: none; }
+.hud-diff-label { font-size: 12px; color: var(--ui-dim); padding-inline-end: 4px; text-shadow: 0 1px 3px #000; }
+.hud-diff-btn { min-width: 76px; min-height: 48px; padding: 4px 12px; font-size: 14px; }
+.hud-diff-btn[aria-pressed='true'] { border-color: #ffe2a0; box-shadow: 0 0 0 3px rgba(242,185,75,.5), var(--ui-shadow); color: #ffe2a0; }
+.hud-diff-btn[data-d='easy'] { --d: #7fd68f; }
+.hud-diff-btn[data-d='medium'] { --d: #f2c14b; }
+.hud-diff-btn[data-d='hard'] { --d: #ff8a4a; }
+.hud-diff-btn[data-d='extreme'] { --d: #ff4a5e; }
+.hud-diff-btn::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--d); box-shadow: 0 0 6px var(--d); margin-inline-end: 6px; }
+.hud-wave-line { display: flex; align-items: baseline; gap: 6px; }
+.hud-diff-tag { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 6px; background: rgba(0,0,0,.35); color: #f2c14b; }
+.hud-diff-tag[data-d='easy'] { color: #7fd68f; }
+.hud-diff-tag[data-d='hard'] { color: #ff8a4a; }
+.hud-diff-tag[data-d='extreme'] { color: #ff4a5e; }
+.hud-end-diff { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; }
+.hud-end-diff .ui-note { width: 100%; text-align: center; margin: 0; }
+@media (max-width: 760px), (max-height: 480px) {
+  .hud-diff { top: calc(84px + env(safe-area-inset-top, 0px)); left: auto; right: calc(12px + env(safe-area-inset-right, 0px)); transform: none; flex-direction: column; align-items: stretch; }
+  .hud-diff-btn { min-width: 96px; min-height: 44px; padding: 2px 8px; font-size: 12px; justify-content: flex-start; }
+  .hud-diff-label { display: none; }
+}

@@ -2,6 +2,7 @@ import { BALANCE, MAX_TOWER_LEVEL, towerStats, type TowerStats } from '../data/b
 import { ELEMENTS, ELEMENT_ORDER, counterOf, elementMultiplier, type ElementId } from '../data/elements';
 import { Game, isElement, type Tower, type TowerId } from '../game/Game';
 import { el, uiRoot } from './dom';
+import { DIFFICULTY_NAMES, DIFFICULTY_ORDER, type DifficultyId } from '../data/difficulty';
 
 /**
  * The in-game HUD (HTML over the canvas):
@@ -51,6 +52,8 @@ export interface HudHooks {
   onUpgrade(tower: Tower): void;
   onConvert(tower: Tower, element: ElementId): void;
   onPickElement(choice: ElementId | 'random'): void;
+  /** a new game on this difficulty (only offered before the first wave and on the end screen) */
+  onDifficulty(d: DifficultyId): void;
   onCloseTower(): void;
   onRestart(): void;
 }
@@ -64,6 +67,8 @@ export class GameHud {
   private readonly armor = el('span', { class: 'hud-armor' });
   private readonly interest = el('span', { class: 'hud-sub' });
   private readonly waveBtn = el('button', { class: 'ui-btn hud-wave-btn', type: 'button' });
+  private readonly diffTag = el('span', { class: 'hud-diff-tag' });
+  private readonly diffRow = el('div', { class: 'hud-diff', role: 'group', 'aria-label': 'Difficulty' });
   private readonly bar = el('div', { class: 'hud-build' });
   private readonly buildBtns = new Map<TowerId, HTMLButtonElement>();
   private readonly picker = el('div', { class: 'hud-pick', hidden: '' });
@@ -80,11 +85,11 @@ export class GameHud {
     const top = el('div', { class: 'hud-top' }, [
       chip('<svg viewBox="0 0 24 24"><path fill="#e2475b" d="M12 21s-7.5-4.6-9.4-9.4C1.2 8 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.8 3.5 4.4 7.1C19.5 16.4 12 21 12 21z"/></svg>', this.lives),
       chip('<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="#f2c14b" stroke="#a8761c" stroke-width="1.5"/><path d="M9 12h6M12 9v6" stroke="#a8761c" stroke-width="1.6"/></svg>', this.gold, this.interest),
-      chip('<svg viewBox="0 0 24 24" fill="none" stroke="#9fc8ff" stroke-width="1.8"><path d="M3 12c3-4 6-4 9 0s6 4 9 0"/><path d="M3 17c3-4 6-4 9 0s6 4 9 0" opacity=".5"/></svg>', this.wave, this.waveName, this.armor),
+      chip('<svg viewBox="0 0 24 24" fill="none" stroke="#9fc8ff" stroke-width="1.8"><path d="M3 12c3-4 6-4 9 0s6 4 9 0"/><path d="M3 17c3-4 6-4 9 0s6 4 9 0" opacity=".5"/></svg>', el('div', { class: 'hud-wave-line' }, [this.wave, this.diffTag]), this.waveName, this.armor),
       this.waveBtn,
     ]);
     this.waveBtn.addEventListener('click', () => this.game.callWave());
-    uiRoot().append(top, this.bar, this.picker, this.panel, this.end);
+    uiRoot().append(top, this.diffRow, this.bar, this.picker, this.panel, this.end);
     window.addEventListener('keydown', (e) => {
       // keys by physical position (works on AZERTY too); no Escape: it belongs to the browser
       if (e.code === 'KeyX') {
@@ -106,6 +111,9 @@ export class GameHud {
 
   bind(game: Game): void {
     this.game = game;
+    this.diffTag.textContent = DIFFICULTY_NAMES[game.difficulty];
+    this.diffTag.dataset.d = game.difficulty;
+    this.diffRow.replaceChildren(el('span', { class: 'hud-diff-label', text: 'Difficulty' }), ...this.difficultyButtons(game.difficulty));
     this.end.hidden = true;
     this.barKey = '-';
     this.offerKey = '-';
@@ -278,16 +286,29 @@ export class GameHud {
     this.panel.querySelector('.hud-sell')!.textContent = `Sell +${g.refundFor(t)}`;
   }
 
+  /** One button per difficulty; the current one is pressed. */
+  private difficultyButtons(current: DifficultyId): HTMLButtonElement[] {
+    return DIFFICULTY_ORDER.map((d) => {
+      const b = el('button', { class: 'ui-btn hud-diff-btn', type: 'button', 'aria-pressed': String(d === current), 'data-d': d, text: DIFFICULTY_NAMES[d] });
+      b.addEventListener('click', () => {
+        if (d !== this.game.difficulty || this.game.phase !== 'ready') this.hooks.onDifficulty(d);
+      });
+      return b;
+    });
+  }
+
   showEnd(won: boolean, wave: number): void {
-    const again = el('button', { class: 'ui-btn hud-again', type: 'button', text: 'Play again' });
+    const again = el('button', { class: 'ui-btn hud-again', type: 'button', text: `Play again (${DIFFICULTY_NAMES[this.game.difficulty]})` });
     again.addEventListener('click', () => this.hooks.onRestart());
+    const other = el('div', { class: 'hud-end-diff' }, [el('span', { class: 'ui-note', text: 'or start a new game on' }), ...this.difficultyButtons(this.game.difficulty)]);
     const kills = this.game.towers.reduce((s, t) => s + t.kills, 0);
     this.end.replaceChildren(
       el('div', { class: 'ui-panel hud-end' }, [
         el('h2', { text: won ? 'The Shardgate holds!' : 'The Shardgate has fallen' }),
-        el('p', { class: 'ui-note', text: won ? `All ${wave} waves defeated.` : `You reached wave ${wave} of ${BALANCE.waves.count}.` }),
+        el('p', { class: 'ui-note', text: won ? `All ${wave} waves defeated on ${DIFFICULTY_NAMES[this.game.difficulty]}.` : `You reached wave ${wave} of ${BALANCE.waves.count} on ${DIFFICULTY_NAMES[this.game.difficulty]}.` }),
         el('p', { class: 'ui-note', text: `Enemies defeated by your towers still standing: ${kills}` }),
         again,
+        other,
       ]),
     );
     this.end.hidden = false;
@@ -318,6 +339,8 @@ export class GameHud {
     const period = BALANCE.economy.interestPeriod;
     const next = Math.floor(g.gold * BALANCE.economy.interestRate);
     this.interest.textContent = g.phase === 'playing' ? `+${next} in ${Math.ceil(period - (g.time % period))}s` : `interest ${Math.round(BALANCE.economy.interestRate * 100)}% / ${period}s`;
+    // difficulty is chosen before the first wave, then locked for the game
+    this.diffRow.hidden = g.phase !== 'ready';
     if (g.phase === 'ready') {
       this.waveBtn.hidden = false;
       this.waveBtn.textContent = 'Start';
