@@ -74,6 +74,14 @@ export const BALANCE = {
     sellRefundSameWave: 1,
   },
 
+  /**
+   * Seconds of game time a tower spends under construction (set by the user):
+   * building, each upgrade (to level 2, to level 3; a 4th entry is ready for a
+   * future level 4) and converting into an element tower. A tower does not
+   * shoot while it works.
+   */
+  construction: { build: 5, upgrade: [5, 10, 15], convert: 5 },
+
   /** levels 1..3 of each tower */
   towers: {
     bolt: [
@@ -125,10 +133,10 @@ export const BALANCE = {
    * Medium is the game as it was tuned before difficulties existed.
    */
   difficulty: {
-    easy: { startGold: 150, lives: 30, hp: 0.7, bossHp: 0.7, bounty: 1.2 },
-    medium: { startGold: 100, lives: 20, hp: 1, bossHp: 1, bounty: 1 },
-    hard: { startGold: 100, lives: 15, hp: 1.6, bossHp: 1.5, bounty: 1 },
-    extreme: { startGold: 100, lives: 15, hp: 2.2, bossHp: 1.7, bounty: 0.9 },
+    easy: { startGold: 150, lives: 30, hp: 0.85, bossHp: 0.85, bounty: 1.15 },
+    medium: { startGold: 100, lives: 20, hp: 1.3, bossHp: 1.3, bounty: 1 },
+    hard: { startGold: 100, lives: 15, hp: 2, bossHp: 1.9, bounty: 0.95 },
+    extreme: { startGold: 100, lives: 12, hp: 2.9, bossHp: 2.6, bounty: 0.85 },
   } satisfies Record<DifficultyId, { startGold: number; lives: number; hp: number; bossHp: number; bounty: number }>,
   /**
    * Difficulty eases in: on wave 1 only `rampStart` of the hp/bossHp difference
@@ -138,7 +146,7 @@ export const BALANCE = {
   difficultyRamp: { rampStart: 0.15, rampWaves: 18 },
 
   elements: {
-    /** element picks happen before the first wave and at the start of every `every`-th wave */
+    /** element picks happen at the start of every `every`-th wave (the first one unlocks at once) */
     every: 5,
     /** a random pick (instead of choosing) pays this much gold */
     randomGold: 25,

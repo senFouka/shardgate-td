@@ -45,6 +45,8 @@ export class GameView {
   private readonly waves: Array<{ mesh: THREE.Mesh; t: number; splash: number; life: number }> = [];
   private readonly ringTex = makeRingTexture();
   readonly root = new THREE.Group();
+  /** progress bars over towers that are being built, upgraded or converted */
+  private readonly bars = new Map<number, { root: THREE.Group; fill: THREE.Mesh; top: number }>();
   private shake = 0;
   private time = 0;
 
@@ -69,6 +71,7 @@ export class GameView {
       else if (e.type === 'over') sfx.play(e.won ? 'victory' : 'gameOver');
 
       if (e.type === 'build') this.addTower(e.tower);
+      else if (e.type === 'built') this.built(e.tower);
       else if (e.type === 'sell') this.removeTower(e.tower, true);
       else if (e.type === 'upgrade') this.upgradeTower(e.tower);
       else if (e.type === 'convert') this.upgradeTower(e.tower, e.tower.kind as ElementId);
@@ -111,6 +114,8 @@ export class GameView {
     }
     for (const k of this.corpses) this.root.remove(k.view.root);
     for (const s of this.shells.values()) this.root.remove(s);
+    for (const b of this.bars.values()) this.root.remove(b.root);
+    this.bars.clear();
     this.towers.clear();
     this.creeps.clear();
     this.corpses.length = 0;
@@ -164,6 +169,7 @@ export class GameView {
   }
 
   private removeTower(t: Tower, sold: boolean): void {
+    this.dropBar(t.id);
     const v = this.towers.get(t.id);
     if (!v) return;
     this.root.remove(v.group);
@@ -171,6 +177,76 @@ export class GameView {
     if (sold) {
       for (let i = 0; i < 10; i++) this.fxAdd.emit({ x: cellX(t.col), y: rand(0.3, 1), z: cellZ(t.row), vx: rand(-0.4, 0.4), vy: rand(1.5, 2.5), vz: rand(-0.4, 0.4), size: 0.1, r: 3, g: 2.3, b: 0.6, life: 0.7, gravity: 5 });
     }
+  }
+
+  /* -------------------------------------------------------- construction */
+
+  /**
+   * A tower at work: a progress bar over it; while being built it rises out
+   * of the ground in a cloud of dust, while upgrading or converting it is
+   * wrapped in a swirl of sparks (gold, or the new element's colour).
+   */
+  private workVisual(t: Tower, v: TowerView, camera: THREE.Camera): void {
+    const w = t.work!;
+    const p = Math.min(1, Math.max(0, 1 - w.left / w.total));
+    let bar = this.bars.get(t.id);
+    if (!bar) {
+      v.group.position.y = 0;
+      const top = new THREE.Box3().setFromObject(v.group).max.y;
+      bar = makeWorkBar(top);
+      bar.root.position.set(cellX(t.col), top + 0.35, cellZ(t.row));
+      this.root.add(bar.root);
+      this.bars.set(t.id, bar);
+    }
+    bar.fill.scale.x = Math.max(0.001, p) * WORK_BAR_W;
+    bar.fill.position.x = (-WORK_BAR_W * (1 - p)) / 2;
+    bar.root.quaternion.copy(camera.quaternion);
+    const x = cellX(t.col);
+    const z = cellZ(t.row);
+    const n = this.particleScale();
+    if (w.type === 'build') {
+      // rises from below the grass to its full height
+      const ease = 1 - Math.pow(1 - p, 2);
+      v.group.position.y = -(1 - ease) * bar.top * 0.92;
+      bar.root.position.y = bar.top + 0.35;
+      if (Math.random() < 0.5 * n) {
+        const a = Math.random() * Math.PI * 2;
+        this.fxSmoke.emit({ x: x + Math.cos(a) * 0.55, y: 0.1, z: z + Math.sin(a) * 0.55, vx: Math.cos(a) * 0.5, vz: Math.sin(a) * 0.5, vy: 0.35, size: 0.3, sizeEnd: 0.7, r: 0.5, g: 0.45, b: 0.36, alpha: 0.45, life: 0.8, drag: 2 });
+      }
+      if (Math.random() < 0.25 * n) this.fxAdd.emit({ x: x + rand(-0.4, 0.4), y: 0.15, z: z + rand(-0.4, 0.4), vy: rand(1.5, 2.5), vx: rand(-0.5, 0.5), vz: rand(-0.5, 0.5), size: 0.07, r: 3, g: 2, b: 0.6, life: 0.4, gravity: 6 });
+      return;
+    }
+    v.group.position.y = 0;
+    const [r, g, b] = w.to ? hdr(w.to, 2.6) : [2.6, 2, 0.6];
+    // two sparks per frame spiralling up around the tower
+    for (let k = 0; k < 2; k++) {
+      if (Math.random() > n) continue;
+      const a = this.time * 6 + k * Math.PI + Math.random() * 0.4;
+      const y = (this.time * 0.8 + k * 0.5) % 1;
+      this.fxAdd.emit({ x: x + Math.cos(a) * 0.65, y: 0.1 + y * bar.top, z: z + Math.sin(a) * 0.65, vy: 0.8, size: rand(0.12, 0.2), sizeEnd: 0.03, r, g, b, life: 0.7, drag: 1 });
+    }
+    if (Math.random() < 0.15 * n) this.fxAdd.emit({ x, y: bar.top * 0.6, z, size: 1.4, sizeEnd: 0.4, r: r * 0.4, g: g * 0.4, b: b * 0.4, life: 0.3 });
+  }
+
+  private dropBar(id: number): void {
+    const bar = this.bars.get(id);
+    if (!bar) return;
+    this.root.remove(bar.root);
+    this.bars.delete(id);
+  }
+
+  /** Construction finished: a ring of dust and a flash of gold. */
+  private built(t: Tower): void {
+    this.dropBar(t.id);
+    const v = this.towers.get(t.id);
+    if (v) v.group.position.y = 0;
+    const x = cellX(t.col);
+    const z = cellZ(t.row);
+    for (let i = 0; i < 16 * this.particleScale(); i++) {
+      const a = (i / 16) * Math.PI * 2;
+      this.fxSmoke.emit({ x, y: 0.1, z, vx: Math.cos(a) * 1.6, vz: Math.sin(a) * 1.6, vy: 0.3, size: 0.3, sizeEnd: 0.7, r: 0.55, g: 0.5, b: 0.42, alpha: 0.5, life: 0.6, drag: 3 });
+    }
+    this.fxAdd.emit({ x, y: 1, z, size: 1.8, sizeEnd: 0.2, r: 2.2, g: 1.8, b: 0.8, life: 0.25 });
   }
 
   /** The fields the creep view reads, in world units. */
@@ -515,9 +591,14 @@ export class GameView {
     for (const t of g.towers) {
       const v = this.towers.get(t.id);
       if (!v) continue;
-      // face the creep it would shoot, like the rules do
-      const best = g.targetFor(t);
-      if (best) v.aim(cellX(best.col), cellZ(best.row));
+      if (t.work) this.workVisual(t, v, camera);
+      else {
+        if (this.bars.has(t.id)) this.dropBar(t.id);
+        v.group.position.y = 0;
+        // face the creep it would shoot, like the rules do
+        const best = g.targetFor(t);
+        if (best) v.aim(cellX(best.col), cellZ(best.row));
+      }
       v.update(this.time, dt);
     }
     for (const s of g.shots) this.shotVisual(s, dt);
@@ -547,6 +628,28 @@ export class GameView {
     this.fxSmoke.update(dt);
     this.shake = Math.max(0, this.shake - dt * 0.3);
   }
+}
+
+const WORK_BAR_W = 1.3;
+const workBarGeo = new THREE.PlaneGeometry(1, 1);
+const workFrame = new THREE.MeshBasicMaterial({ color: 0xd8a94c, depthTest: false });
+const workBack = new THREE.MeshBasicMaterial({ color: 0x120c08, depthTest: false });
+const workFill = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.9, 1.4, 0.45), depthTest: false });
+
+/** A billboard progress bar (dark frame, gold fill). */
+function makeWorkBar(top: number): { root: THREE.Group; fill: THREE.Mesh; top: number } {
+  const root = new THREE.Group();
+  const frame = new THREE.Mesh(workBarGeo, workFrame);
+  frame.scale.set(WORK_BAR_W + 0.1, 0.26, 1);
+  const back = new THREE.Mesh(workBarGeo, workBack);
+  back.scale.set(WORK_BAR_W + 0.04, 0.2, 1);
+  const fill = new THREE.Mesh(workBarGeo, workFill);
+  fill.scale.set(0.001, 0.15, 1);
+  frame.renderOrder = 20;
+  back.renderOrder = 21;
+  fill.renderOrder = 22;
+  root.add(frame, back, fill);
+  return { root, fill, top };
 }
 
 /** An element UI colour as HDR particle RGB. */

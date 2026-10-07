@@ -17,6 +17,11 @@ function run(game: Game, seconds: number): void {
   for (let t = 0; t < seconds; t += 0.1) game.advance(0.1);
 }
 
+/** Lets every tower finish its construction (works before the first wave too). */
+function settle(game: Game): void {
+  for (let i = 0; i < 400 && game.towers.some((t) => t.work); i++) game.advance(0.1);
+}
+
 test('towers go on empty grass only, and cost gold', () => {
   const g = new Game();
   const lane = buildGrid().indexOf('lane');
@@ -33,10 +38,15 @@ test('upgrades: three levels, each stronger, paid in gold and counted in refunds
   g.gold = 1000;
   const [c, r] = grassCells()[5];
   const t = g.build('bolt', c, r) as Exclude<ReturnType<Game['build']>, string>;
+  assert.equal(g.upgrade(t), 'busy', 'not while it is being built');
+  settle(g);
   assert.equal(g.upgrade(t), null);
+  assert.equal(t.level, 1, 'the upgrade takes time');
+  settle(g);
   assert.equal(t.level, 2);
   assert.ok(Game.dps('bolt', 2) > Game.dps('bolt', 1));
   assert.equal(g.upgrade(t), null);
+  settle(g);
   assert.equal(t.level, 3);
   assert.equal(g.upgrade(t), 'max');
   assert.equal(t.spent, towerStats('bolt', 1).cost + towerStats('bolt', 2).cost + towerStats('bolt', 3).cost);
@@ -45,6 +55,7 @@ test('upgrades: three levels, each stronger, paid in gold and counted in refunds
   const [c2, r2] = grassCells()[6];
   g.gold = towerStats('mortar', 1).cost;
   const m = g.build('mortar', c2, r2) as Exclude<ReturnType<Game['build']>, string>;
+  settle(g);
   assert.equal(g.upgrade(m), 'gold');
 });
 
@@ -146,6 +157,7 @@ test('mortar shells hit creeps walking close together', () => {
   const g = new Game();
   g.gold = 1000;
   for (const [c, r] of grassCells().filter(([, r]) => r === 4 || r === 5).slice(0, 4)) g.build('mortar', c, r);
+  settle(g);
   let multi = 0;
   let hitsThisShell = 0;
   g.on((e) => {
@@ -210,4 +222,37 @@ test('difficulty: harder levels mean tougher creeps and never more lives, locked
   const lives = DIFFICULTY_ORDER.map((d) => BALANCE.difficulty[d].lives);
   for (let i = 1; i < lives.length; i++) assert.ok(lives[i] <= lives[i - 1], `lives by difficulty ${lives.join(",")}`);
   assert.ok(lives[0] > lives[lives.length - 1]);
+});
+
+test('construction: building and each upgrade take their time, and a working tower does not shoot', () => {
+  const C = BALANCE.construction;
+  const g = new Game();
+  g.gold = 1000;
+  const [c, r] = grassCells().filter(([, r]) => r === 4 || r === 5)[0];
+  const t = g.build('bolt', c, r) as Exclude<ReturnType<Game['build']>, string>;
+  assert.equal(t.work?.type, 'build');
+  assert.equal(t.work?.total, C.build);
+  const done: string[] = [];
+  g.on((e) => {
+    if (e.type === 'built' || e.type === 'upgrade') done.push(`${e.type}@${g.time.toFixed(1)}`);
+  });
+  g.callWave();
+  let shots = 0;
+  g.on((e) => {
+    if (e.type === 'fire') shots++;
+  });
+  run(g, C.build - 0.5);
+  assert.equal(shots, 0, 'no shots while building');
+  assert.ok(t.work);
+  run(g, 1);
+  assert.equal(t.work, null);
+  assert.equal(g.upgrade(t), null);
+  assert.equal(t.work?.total, C.upgrade[0]);
+  run(g, C.upgrade[0] + 0.2);
+  assert.equal(t.level, 2);
+  assert.equal(g.upgrade(t), null);
+  assert.equal(t.work?.total, C.upgrade[1], 'the next level takes longer');
+  run(g, C.upgrade[1] + 0.2);
+  assert.equal(t.level, 3);
+  assert.deepEqual(done.map((d) => d.split('@')[0]), ['built', 'upgrade', 'upgrade']);
 });

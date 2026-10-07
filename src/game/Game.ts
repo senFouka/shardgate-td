@@ -12,10 +12,10 @@
  * 10 s rest counts down to the next wave, which the player can start at any
  * time after the wave has finished spawning.
  *
- * Elements: the player picks one before the first wave (it unlocks at once)
- * and one at the start of every 5th wave; each later pick summons that
- * element's boss, and the element unlocks (or levels up) when the boss dies
- * or gets through. Each wave wears an armor element; element towers deal
+ * Elements: the player picks one at the start of every 5th wave (none before
+ * that: the first waves are Bolt and Mortar only, set by the user). The first
+ * pick unlocks at once; each later pick summons that element's boss, and the
+ * element unlocks (or levels up) when the boss dies or gets through. Each wave wears an armor element; element towers deal
  * x1.5 to the next element in the cycle and x0.5 to the previous one.
  */
 import { BALANCE, MAX_TOWER_LEVEL, creepBounty, creepHp, towerStats, type TowerKind, type TowerStats } from '../data/balance.ts';
@@ -86,6 +86,17 @@ export interface Tower {
   cooldown: number;
   kills: number;
   damageDealt: number;
+  /** construction in progress (the tower does not shoot meanwhile), or null */
+  work: TowerWork | null;
+}
+
+export interface TowerWork {
+  type: 'build' | 'upgrade' | 'convert';
+  /** seconds left and in total */
+  left: number;
+  total: number;
+  /** convert: the element tower it becomes */
+  to: ElementId | null;
 }
 
 export interface Shot {
@@ -122,9 +133,15 @@ export type GameEvent =
   | { type: 'leak'; creep: Creep }
   | { type: 'gold'; gold: number; delta: number; reason: GoldReason }
   | { type: 'lives'; lives: number }
+  /** a tower was placed: it is under construction until 'built' */
   | { type: 'build'; tower: Tower }
+  | { type: 'built'; tower: Tower }
+  /** an upgrade or conversion was paid for and started */
+  | { type: 'work-start'; tower: Tower }
+  /** an upgrade finished: the tower is now at its new level */
   | { type: 'upgrade'; tower: Tower }
   | { type: 'sell'; tower: Tower; refund: number }
+  /** a conversion finished: the tower is now an element tower */
   | { type: 'convert'; tower: Tower; from: TowerId }
   /** the element offer changed (null when no pick is waiting) */
   | { type: 'offer'; offer: ElementId[] | null }
@@ -135,7 +152,7 @@ export type GameEvent =
   | { type: 'over'; won: boolean; wave: number };
 
 export type Phase = 'ready' | 'playing' | 'won' | 'lost';
-export type BuildError = 'not-grass' | 'occupied' | 'gold' | 'over' | 'max' | 'locked';
+export type BuildError = 'not-grass' | 'occupied' | 'gold' | 'over' | 'max' | 'locked' | 'busy';
 
 const STEP = 1 / 60;
 
@@ -163,7 +180,7 @@ export class Game {
   /** element levels (0 = not owned) */
   readonly elements: Record<ElementId, number> = { ember: 0, frost: 0, gale: 0, stone: 0, venom: 0, tide: 0 };
   /** the three elements on offer while a pick is waiting, else null */
-  offer: ElementId[] | null;
+  offer: ElementId[] | null = null;
   /** creeps of the current wave still to spawn (a boss counts as one, and comes last) */
   private toSpawn = 0;
   private bossPending = false;
@@ -172,7 +189,7 @@ export class Game {
   private passiveTimer = 0;
   private nextId = 1;
   /** picks earned but not made yet */
-  private picksOwed = 1;
+  private picksOwed = 0;
   private picksMade = 0;
   private rng: number;
   private readonly listeners: Array<(e: GameEvent) => void> = [];
@@ -197,7 +214,6 @@ export class Game {
     this.routeLength = len;
     this.creepSpeed = len / BALANCE.waves.routeSeconds;
     this.grass = buildGrid().map((k) => k === 'grass');
-    this.offer = this.makeOffer();
   }
 
   on(fn: (e: GameEvent) => void): void {
@@ -345,7 +361,11 @@ export class Game {
     const err = this.canBuild(kind, col, row);
     if (err) return err;
     const cost = towerStats(kind, 1).cost;
-    const tower: Tower = { id: this.nextId++, kind, col, row, level: 1, spent: cost, builtAtWave: this.wave, cooldown: 0, kills: 0, damageDealt: 0 };
+    const time = BALANCE.construction.build;
+    const tower: Tower = {
+      id: this.nextId++, kind, col, row, level: 1, spent: cost, builtAtWave: this.wave, cooldown: 0, kills: 0, damageDealt: 0,
+      work: time > 0 ? { type: 'build', left: time, total: time, to: null } : null,
+    };
     this.towers.push(tower);
     this.addGold(-cost, 'build');
     this.emit({ type: 'build', tower });
@@ -357,10 +377,17 @@ export class Game {
     return t.level >= MAX_TOWER_LEVEL ? null : towerStats(t.kind, t.level + 1).cost;
   }
 
+  /** Seconds an upgrade from the tower's current level takes. */
+  static upgradeTime(level: number): number {
+    const u = BALANCE.construction.upgrade;
+    return u[Math.min(u.length - 1, Math.max(0, level - 1))];
+  }
+
   canUpgrade(t: Tower): BuildError | null {
     if (this.phase === 'won' || this.phase === 'lost') return 'over';
     const cost = this.upgradeCost(t);
     if (cost === null) return 'max';
+    if (t.work) return 'busy';
     if (this.gold < cost) return 'gold';
     return null;
   }
@@ -369,10 +396,12 @@ export class Game {
     const err = this.canUpgrade(t);
     if (err) return err;
     const cost = this.upgradeCost(t)!;
-    t.level++;
     t.spent += cost;
     this.addGold(-cost, 'upgrade');
-    this.emit({ type: 'upgrade', tower: t });
+    const time = Game.upgradeTime(t.level);
+    t.work = { type: 'upgrade', left: time, total: time, to: null };
+    this.emit({ type: 'work-start', tower: t });
+    if (time <= 0) this.finishWork(t);
     return null;
   }
 
@@ -392,6 +421,7 @@ export class Game {
     if (this.phase === 'won' || this.phase === 'lost') return 'over';
     const cost = this.convertCost(t, el);
     if (cost === null) return 'max';
+    if (t.work) return 'busy';
     if (this.elements[el] < 1) return 'locked';
     if (this.gold < cost) return 'gold';
     return null;
@@ -401,13 +431,38 @@ export class Game {
     const err = this.canConvert(t, el);
     if (err) return err;
     const cost = this.convertCost(t, el)!;
-    const from = t.kind;
-    t.kind = el;
     t.spent += cost;
-    t.cooldown = Math.min(t.cooldown, 0.3);
     this.addGold(-cost, 'convert');
-    this.emit({ type: 'convert', tower: t, from });
+    const time = BALANCE.construction.convert;
+    t.work = { type: 'convert', left: time, total: time, to: el };
+    this.emit({ type: 'work-start', tower: t });
+    if (time <= 0) this.finishWork(t);
     return null;
+  }
+
+  /** Ticks every tower's construction. */
+  private workStep(h: number): void {
+    for (const t of this.towers) {
+      if (!t.work) continue;
+      t.work.left -= h;
+      if (t.work.left <= 0) this.finishWork(t);
+    }
+  }
+
+  private finishWork(t: Tower): void {
+    const w = t.work;
+    if (!w) return;
+    t.work = null;
+    t.cooldown = 0;
+    if (w.type === 'build') this.emit({ type: 'built', tower: t });
+    else if (w.type === 'upgrade') {
+      t.level++;
+      this.emit({ type: 'upgrade', tower: t });
+    } else if (w.to) {
+      const from = t.kind;
+      t.kind = w.to;
+      this.emit({ type: 'convert', tower: t, from });
+    }
   }
 
   towerAt(col: number, row: number): Tower | null {
@@ -438,6 +493,11 @@ export class Game {
   /* ---------------------------------------------------------------- loop */
 
   advance(dt: number): void {
+    // before the first wave only construction moves (towers built early finish on time)
+    if (this.phase === 'ready') {
+      this.workStep(Math.min(dt, 0.25));
+      return;
+    }
     if (this.phase !== 'playing') return;
     let left = Math.min(dt, 0.25);
     while (left > 1e-9 && this.phase === 'playing') {
@@ -509,7 +569,8 @@ export class Game {
       this.place(c);
     }
 
-    for (const t of this.towers) this.towerStep(t, h);
+    this.workStep(h);
+    for (const t of this.towers) if (!t.work) this.towerStep(t, h);
     for (const s of this.shots) this.shotStep(s, h);
     this.shots = this.shots.filter((s) => !s.done);
     this.creeps = this.creeps.filter((c) => c.alive);

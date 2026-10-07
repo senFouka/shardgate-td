@@ -228,7 +228,7 @@ export class GameHud {
     const g = this.game;
     const cost = g.upgradeCost(t);
     const owned = ELEMENT_ORDER.filter((e) => g.elements[e] > 0);
-    const key = `${t.id}:${t.kind}:${t.level}:${t.kills}:${g.gold}:${g.refundFor(t)}:${owned.join()}:${g.wave}`;
+    const key = `${t.id}:${t.kind}:${t.level}:${t.kills}:${g.gold}:${g.refundFor(t)}:${owned.join()}:${g.wave}:${t.work ? Math.ceil(t.work.left) : '-'}`;
     if (!force && key === this.panelKey) return;
     this.panelKey = key;
     const s = towerStats(t.kind, t.level);
@@ -270,17 +270,21 @@ export class GameHud {
           el('span', { class: 'hud-tower-icon', html: elementIcon(e) }),
           el('span', { class: 'hud-tower-cost', text: String(price) }),
         ]);
-        b.disabled = g.gold < price;
+        b.disabled = g.gold < price || !!t.work;
         b.addEventListener('click', () => this.hooks.onConvert(t, e));
         return b;
       }),
     );
     const up = this.panel.querySelector<HTMLButtonElement>('.hud-upgrade')!;
-    if (cost === null) {
+    if (t.work) {
+      const what = t.work.type === 'build' ? 'Building' : t.work.type === 'upgrade' ? `To Lv ${t.level + 1}` : `To ${ELEMENTS[t.work.to!].name}`;
+      up.textContent = `${what}… ${Math.ceil(t.work.left)}s`;
+      up.disabled = true;
+    } else if (cost === null) {
       up.textContent = 'Max level';
       up.disabled = true;
     } else {
-      up.textContent = `Upgrade ● ${cost}`;
+      up.textContent = `Upgrade ● ${cost} · ${Game.upgradeTime(t.level)}s`;
       up.disabled = g.gold < cost;
     }
     this.panel.querySelector('.hud-sell')!.textContent = `Sell +${g.refundFor(t)}`;

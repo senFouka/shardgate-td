@@ -78,6 +78,11 @@ Slices merged into main; direction B (Phaser + baked sprites) removed.
 - [x] Easy / Medium / Hard / Extreme in `BALANCE.difficulty` (start gold, lives, creep/boss hp, kill gold), eased in over waves 1-19 (`difficultyRamp`). Selector before Start (desktop: row under the top bar; phone: column on the right) and on the end screen; tag in the wave chip; remembered in the profile; best wave per difficulty.
 - Bots (6 games each): Easy planner 6/6, newbie 6/6. Medium planner 6/6, newbie loses w37-40. Hard planner 3/6 (others w30-37), newbie w25-33. Extreme planner 0/6 (w10-40, median ~23), newbie w15-21. The planner bot now opens with 6 Bolts.
 
+## Construction time, first pick at wave 5, harder levels (user, 2026-10-08)
+- [x] Building takes 5 s, upgrades 5 s (to Lv 2) and 10 s (to Lv 3), converting 5 s (`BALANCE.construction`; a 15 s entry waits for a possible level 4). A working tower does not shoot; a gold progress bar floats over it; it rises out of the ground while built; sparks spiral while it upgrades. Panel shows "To Lv 2… 3s".
+- [x] No element pick before wave 5; the wave-5 pick unlocks at once, later picks summon guardians.
+- [x] Harder (user reached wave 30 on Extreme easily): hp Easy 0.85 / Medium 1.3 / Hard 2.0 / Extreme 2.9 (bosses 0.85/1.3/1.9/2.6), Extreme 12 lives, less kill gold on Hard/Extreme. Bots (5 games): Easy all win; Medium planner 5/5, counter-bot 2/5, newbie w33-35; Hard planner w13-26, counter-bot 1/5; Extreme bots w8-15. The bots play worse than the user, so these are relative numbers.
+
 ## Notes for the proposal (1b)
 A throwaway sim (not in the repo) compared, at equal tower counts, a
 "gauntlet" (towers hugging the straight path) with a comb maze on the

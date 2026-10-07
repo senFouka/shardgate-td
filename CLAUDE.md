@@ -70,7 +70,7 @@ Copy (do not link) these from the Element Warden repo (`git@github.com:senFouka/
 2. The player places towers on the grass cells beside the route (one tower per cell). Towers never block the route.
 3. Each enemy that reaches the exit costs lives. Lives at 0 → game over.
 4. Gold from kills + **interest**: every 15 s of game time the player earns a percentage of banked gold (saving vs. spending is a real decision).
-5. Every 5 waves the player **picks one element** (choice of 3, or a random pick for bonus gold). The first element unlocks at once. Every later pick **summons that element's boss**; the element unlocks only when the boss dies. Elements unlock single-element towers; owning two elements unlocks their dual tower; triples come later.
+5. Every 5 waves the player **picks one element** (choice of 3, or a random pick for bonus gold). **No pick before wave 5** (user, 2026-10-08): the first waves are Bolt and Mortar only. The first pick (wave 5) unlocks at once. Every later pick **summons that element's boss**; the element unlocks only when the boss dies. Elements unlock single-element towers; owning two elements unlocks their dual tower; triples come later.
 6. Towers are upgraded in place and can be **converted**: a basic tower (Bolt, Mortar) upgrades into any unlocked elemental tower, a single into a dual by adding a second owned element.
 7. A **boss** walks at the end of every 5th wave (8 bosses in a 40-wave game, each its own model). A full game is **40 waves** in v1, with save/resume. Every wave has its own creep model (40 different looks).
 

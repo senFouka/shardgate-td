@@ -29,6 +29,11 @@ function run(game: Game, seconds: number): void {
   for (let t = 0; t < seconds; t += 0.1) game.advance(0.1);
 }
 
+/** Lets every tower finish its construction (works before the first wave too). */
+function settle(game: Game): void {
+  for (let i = 0; i < 400 && game.towers.some((t) => t.work); i++) game.advance(0.1);
+}
+
 test('counter cycle: x1.5 against the next element, x0.5 against the previous, x1 otherwise', () => {
   for (let i = 0; i < ELEMENT_ORDER.length; i++) {
     const el = ELEMENT_ORDER[i];
@@ -43,10 +48,23 @@ test('counter cycle: x1.5 against the next element, x0.5 against the previous, x
   assert.equal(WAVE_ARMOR.length, BALANCE.waves.count);
 });
 
-test('the first pick unlocks at once; element towers are locked until then', () => {
+/** Plays undefended waves until the wave-5 element offer appears. */
+function toFirstPick(g: Game): void {
+  g.lives = 1000;
+  g.callWave();
+  while (!g.offer && g.wave < BALANCE.elements.every) {
+    run(g, BALANCE.waves.size * BALANCE.waves.spacing + 0.5);
+    g.callWave();
+  }
+}
+
+test('no element before wave 5; the first pick (at wave 5) unlocks at once', () => {
   const g = new Game(7);
   const [c, r] = grassCells()[30];
+  assert.equal(g.offer, null, 'no element offer at the start');
   assert.equal(g.build('ember', c, r), 'locked');
+  toFirstPick(g);
+  assert.equal(g.wave, BALANCE.elements.every);
   assert.ok(g.offer && g.offer.length === 3 && new Set(g.offer).size === 3);
   const el = g.offer![0];
   assert.equal(g.pick(el), el);
@@ -58,6 +76,7 @@ test('the first pick unlocks at once; element towers are locked until then', () 
 
 test('a random pick gives any element plus gold', () => {
   const g = new Game(3);
+  toFirstPick(g);
   const gold = g.gold;
   const el = g.pick('random')!;
   assert.ok(ELEMENT_ORDER.includes(el));
@@ -67,15 +86,15 @@ test('a random pick gives any element plus gold', () => {
 
 test('later picks come every 5th wave and summon the element boss; killing it unlocks the element', () => {
   const g = new Game(11);
-  g.lives = 1000;
+  toFirstPick(g);
   g.pick(g.offer![0]);
-  g.callWave();
-  for (let w = 1; w < BALANCE.elements.every; w++) {
+  while (g.wave < BALANCE.elements.every * 2) {
     assert.equal(g.offer, null);
-    run(g, BALANCE.waves.size * BALANCE.waves.spacing + 0.5);
+    run(g, 1);
     g.callWave();
   }
-  assert.ok(g.offer, 'a pick is offered when wave 5 starts');
+  assert.equal(g.wave, BALANCE.elements.every * 2);
+  assert.ok(g.offer, 'a pick is offered when wave 10 starts');
   const el = g.offer!.find((e) => g.elements[e] === 0)!;
   g.pick(el);
   assert.equal(g.elements[el], 0, 'not yet: the boss must fall first');
@@ -92,12 +111,16 @@ test('element towers: burn, slow, stun, poison stacks and knockback', () => {
   g.gold = 5000;
   g.lives = 1000;
   const spots = bestSpots();
-  for (const [i, el] of ELEMENT_ORDER.entries()) g.build(el, spots[i][0], spots[i][1]);
+  // Stone only has a chance to stun: give it the best spot and a few more towers
+  const order = ['stone', ...ELEMENT_ORDER.filter((e) => e !== 'stone')] as const;
+  for (const [i, el] of order.entries()) g.build(el, spots[i][0], spots[i][1]);
+  for (let i = 6; i < 12; i++) g.build('stone', spots[i][0], spots[i][1]);
   g.wave = 18; // tough ground creeps, so every tower gets to hit
   const seen = { burn: false, slow: false, stun: false, poison2: false, chain: false };
   g.on((e) => {
     if (e.type === 'fire' && e.shot.chain && e.shot.chain.length > 2) seen.chain = true;
   });
+  settle(g);
   g.callWave();
   for (let i = 0; i < 600; i++) {
     g.advance(0.1);
@@ -123,13 +146,18 @@ test('converting a basic tower keeps its place and level, costs the difference',
   g.gold = 1000;
   const [c, r] = grassCells()[50];
   const t = g.build('bolt', c, r) as Tower;
+  settle(g);
   g.upgrade(t);
+  settle(g);
   assert.equal(g.convert(t, 'frost'), 'locked');
   g.elements.frost = 1;
   const cost = g.convertCost(t, 'frost')!;
   assert.equal(cost, towerStats('frost', 1).cost + towerStats('frost', 2).cost - towerStats('bolt', 1).cost - towerStats('bolt', 2).cost);
   const gold = g.gold;
   assert.equal(g.convert(t, 'frost'), null);
+  assert.equal(t.kind, 'bolt', 'converting takes time');
+  assert.equal(g.convert(t, 'frost'), 'busy');
+  settle(g);
   assert.equal(t.kind, 'frost');
   assert.equal(t.level, 2);
   assert.equal(g.gold, gold - cost);
@@ -147,6 +175,7 @@ test('Mortar never targets or hurts flying creeps', () => {
   g.on((e) => {
     if (e.type === 'fire') fired++;
   });
+  settle(g);
   g.callWave();
   run(g, 40);
   assert.ok(g.creeps.length > 0 && g.creeps.every((c) => c.flying && c.hp === c.maxHp));
@@ -161,6 +190,7 @@ test('element counters change the damage a wave takes', () => {
     g.gold = 1000;
     for (const [c, r] of nearRoute().slice(0, 3)) g.build('ember', c, r);
     g.wave = armorWave - 1;
+    settle(g);
     g.callWave();
     run(g, 25);
     return g.towers.reduce((s, t) => s + t.damageDealt, 0) / Math.max(1, g.creeps.reduce((s, c) => s + c.maxHp, 0) / Math.max(1, g.creeps.length));
