@@ -1,0 +1,91 @@
+# PROGRESS — Shardgate TD
+
+Read `CLAUDE.md` first, then this file.
+
+## Reused core: origin
+Copied from Element Warden (`git@github.com:senFouka/element-warden.git`)
+at commit **`c16bbf793e41e7403cfc1087544f43192e6a096f`** (2026-10-04,
+"Submitted to CrazyGames Basic Launch"). To port a later fix:
+`git log c16bbf7..HEAD -- <path>` in Element Warden, then apply by hand.
+
+| Shardgate file | From Element Warden | Changes |
+|---|---|---|
+| `src/services/platform/*` | same paths | localStorage prefix `shardgate-td:` |
+| `src/systems/SaveSystem.ts` | same | comments only |
+| `src/systems/saveFormat.ts` | same | counter `lifetimeEssenceEarned` → `lifetimeWavesCleared`; Essence/Sanctum/offline/daily/discoveries removed; speed 1/2/3; RunSave fields for a maze game. Reconcile rules unchanged. |
+| `src/systems/ProfileStore.ts` | same | trimmed to mute, speed, hints, bests, `addWaveCleared()` |
+| `src/systems/Sfx.ts` | same | same API and rules; Phaser sound manager replaced by Web Audio |
+| `src/core/EventBus.ts` | same | same API; own emitter instead of Phaser's; event map emptied |
+| `src/core/viewport.ts` | same | same idea (fixed play area, scenery instead of bars), now a perspective-camera fit |
+| `src/art/draw.ts` | same | unchanged |
+| `src/art/palette.ts` | same | own colours |
+| `src/ui/ui.css`, `src/ui/*.ts` | `ui/theme.ts`, UIScene | HUD and menus are HTML/CSS over the canvas |
+| `src/ui/FocusPause.ts` | `UIScene.buildFocusPause/pauseForFocus` | own class, same behaviour, HTML overlay |
+| `tests/saveFormat.test.ts`, `tests/sounds.test.ts` | same | adapted to the new fields |
+| `.gitignore`, `.env.basic`, `tsconfig.json`, `vite.config.ts`, `index.html` | same | names/colours |
+
+Not copied (Element Warden-specific): its art (`spireArt`, `enemyArt`,
+`icons`, `textures`), gameplay systems, Kenney sounds (sounds will be chosen
+by the user in Milestone 6).
+
+### Playtest harness
+Lives outside the repo in `%TEMP%\sg-driver` (`playwright-core` 1.63, copied
+from Element Warden's `%TEMP%\ew-driver`; drives the system Chrome with
+`channel: 'chrome'` and SwiftShader WebGL). Element Warden's method: bots run
+in real headless Chrome and step GameScene's own simulation at a fixed
+1/60 s, faster than real time. Scripts so far: `smoke.mjs` (game), `measure.mjs`, `gif.mjs`, `graphics.mjs`, `gfx2.mjs` (slice). Use `--use-angle=d3d11` for the real GPU.
+
+## Step 0: Visual direction (done: the user chose A, 3D Three.js, 2026-10-06)
+Slices merged into main; direction B (Phaser + baked sprites) removed.
+- [x] Assets sourced, licences checked, logged in `ASSETS.md` (+ `slices/ASSET_SOURCES.txt`).
+- [x] Slice A, 3D (`slices/3d`, Three.js 0.186 added as a dependency for the slice).
+- [x] Slice B, 2.5D Phaser (`slices/iso`) with sprites baked from the same 3D content (`slices/bake`, written to `slices/public/iso` by `%TEMP%/sg-driver/bake.mjs`).
+- [x] Measured in headless Chrome on the real GPU (`%TEMP%/sg-driver/measure.mjs`, `gif.mjs`; output in `%TEMP%/sg-driver/step0`).
+- [x] Report: https://claude.ai/artifact/F69beBtzR7hrvr9fBqhat1 (recommends A).
+- [x] User picked **A**. Phaser removed from the game; core ported to Three.js + HTML UI (see the table above).
+- [x] Graphics settings: Low / Medium / High / Custom with per-detail controls, auto-detection from the GPU (`src/data/graphics.ts`, unit-tested) plus a frame-rate check that steps an automatic preset down (verified: High -> Medium -> Low on a throttled run, toast shown). The slice uses the same renderer and panel.
+- Run: `npm run slices` -> http://localhost:5180/3d/index.html (`?gfx=low|medium|high`, `?fps=1`).
+- Measurement notes: headless Chrome caps rAF at ~75 Hz; uncapped mode is unreliable for multi-pass rendering; "laptop proxy" = GTX 1650 at 2560x1440; 1440p numbers vary a lot between runs.
+- User feedback (2026-10-06): wants a bigger map with a longer path, with spawn and exit ending next to each other and space between them. Must be our own layout (originality rule); proposal goes into 1b.
+
+## Milestone 1: Core copy + map
+- [x] **1a** git repo, remote, Vite/Phaser/TS scaffold, reused core copied,
+      build + tests green. Smoke test (headless Chrome): boots in ~3 s,
+      CrazyGames SDK in `local` mode, mute persists to the profile, blur
+      pauses / tap resumes, phone viewport letterboxes, no JS errors.
+- [x] **1b** Map: after 36x22 (too small), 72x44 and 54x33 (too big), the user sent an Element TD 2 screenshot and asked for that route. Built "Shardgate Spiral" 34x30: blue portal in / red portal out side by side at the top, fixed spiral of 2-cell cobblestone lanes with 2-cell grass strips between (double-pass), route 219 cells, 525 grass cells. Own art (cobblestone, kerbs, portals, forest). Originality exception recorded in CLAUDE.md.
+- [x] **1b-2** The user approved (2026-10-06): ETD-style mechanics (element boss unlocks each element after the first, duals, triples later, interest every 15 s), fixed route for the whole game (no mazing), build anytime + wave countdown. Recorded in CLAUDE.md.
+- [x] 1c fixed route + grid (lanes / grass), tests prove lanes never touch off-route
+- [x] 1d place / sell on grass: ghost (green/red) + range ring, tap to build, tap tower to select, Sell with 100%/75% refund
+- [x] 1e `src/game/Game.ts` (pure TS, 10 tests): skeleton creeps, 40 waves by formula (draft numbers in balance.ts), countdown + early-call bonus, interest 2%/15 s, leaks, game over / victory, Play again. Views: Bolt (aims, recoils) and Mortar (lobbed shells, blast, shockwave), health bars, death effects. HUD: lives, gold + interest timer, wave, Start / Next wave button; build bar (keys 1/2); tower panel; end screen.
+- [ ] 1f bots: planner vs spammer, balance report (numbers in balance.ts are a first draft), load time, FPS
+- Open: the user asked to copy Element TD's tower looks; told them we make our own designs in that spirit (originality rule, CrazyGames risk) and asked for reference screenshots of the qualities they like.
+
+## Done after M1 at the user's request (out of milestone order)
+- Wave pacing (60 s route, 80 s max, 10 s rest, Start now), 40 creep looks + 8 bosses, Bolt/Mortar 3 levels, sounds + music system, balance via bots (start gold 100, +1 gold / 3 s, bosses 8x HP).
+- Mortar is ground-only: never targets or splashes flying creeps (user rule, 2026-10-07).
+
+## Milestone 3: Elements (started early: the user asked for many towers with special roles, 2026-10-07)
+- [x] Rules (`Game.ts`, `data/elements.ts`, `balance.ts`): six elements in the counter cycle, wave armor (`WAVE_ARMOR`), x1.5 / x0.5 damage; first pick unlocks at once, a pick at the start of waves 5..35 summons that element's guardian boss (unlocks or levels the element when it dies or leaks); random pick +25 gold; element levels add +15% damage; convert Bolt/Mortar into any owned element tower (same level, pay the difference).
+- [x] Tower mechanics: Ember burn, Frost slow + shard splash, Gale chain lightning, Stone stun chance, Venom stacking poison + armor shred, Tide lobbed splash + knockback. Bosses take half stun/knockback.
+- [x] Views: six element towers on the ornate kit (`render/elementTowers.ts`), each with its own head and 3 visible levels; projectiles, impacts, lightning arcs, status effects on creeps (burn/chill/poison/stun), guardian summon burst, element-unlock light pillar. Particle counts follow the graphics preset.
+- [x] HUD: element pick panel (desktop: left card list; phone: row above the build bar), build bar with owned elements (keys 1-8), armor + counter in the wave chip, next-wave preview during rest, tower panel with effect text, counter vs this wave, Convert buttons.
+- [x] 9 element tests (52 total). Bots: planner with elements wins 4/4, random newbie loses at waves 38-40.
+- [ ] Element-specific sounds (waiting for the user's audition picks), guardian models review, balance report for approval.
+- Audio round 2 (all CC0, OpenGameArt + Freesound): 8 music tracks, 64 SFX in `slices/audition/sounds/` (manifest2.json, SOURCES2.txt); waiting for the user's numbers. Log the chosen ones in ASSETS.md when they move to `public/audio`.
+
+## Notes for the proposal (1b)
+A throwaway sim (not in the repo) compared, at equal tower counts, a
+"gauntlet" (towers hugging the straight path) with a comb maze on the
+proposed map. Fire coverage per enemy pass (sum over towers of path cells
+in range, range 3):
+
+| towers | gauntlet | comb maze |
+|---|---|---|
+| 15 | 80 | 52 |
+| 30 | 167 | 215 |
+| 60 | 317 | 490 |
+| 90 | 467 | 795 |
+
+Mazing only overtakes the gauntlet at ~25–30 towers, so cheap wall towers
+and enough early gold matter for "mazing clearly beats spamming".

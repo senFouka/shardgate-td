@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <title>Shardgate TD</title>
+    <!-- CrazyGames SDK v3, loaded before the game (docs.crazygames.com/sdk/intro).
+         If it fails to load, the game falls back to its mock platform. -->
+    <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
+    <style>
+      /* Landscape-only game: ask small screens held upright to turn. */
+      #rotate {
+        position: fixed;
+        inset: 0;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        background: #090a12;
+        color: #ece8f6;
+        font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        text-align: center;
+        padding: 24px;
+        z-index: 10;
+      }
+      #rotate svg { animation: tip 1.8s ease-in-out infinite; }
+      @keyframes tip {
+        0%, 45% { transform: rotate(0deg); }
+        60%, 100% { transform: rotate(-90deg); }
+      }
+      @media (orientation: portrait) and (max-height: 900px) {
+        #rotate { display: flex; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game"></div>
+    <div id="rotate">
+      <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#f2b94b" stroke-width="1.6">
+        <rect x="7" y="2" width="10" height="20" rx="2" />
+        <line x1="10" y1="19" x2="14" y2="19" />
+      </svg>
+      <div style="font-size: 20px; font-weight: 600">Turn your device sideways</div>
+      <div style="font-size: 14px; opacity: 0.7">Shardgate TD is played in landscape</div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

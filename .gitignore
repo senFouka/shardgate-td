@@ -1,0 +1,9 @@
+node_modules
+dist
+.DS_Store
+*.local
+audition/
+store/*.mp4
+
+store/upload/
+dist-slices
