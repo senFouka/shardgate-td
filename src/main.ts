@@ -237,7 +237,8 @@ async function boot(): Promise<void> {
       return;
     }
     if (outcome === 'adblock') toast('The ad could not play (is an ad blocker on?). Nothing was used up.', 3500);
-    else if (outcome !== 'disabled') toast('No ad is available right now. Try again in a little while.', 3000);
+    else if (outcome === 'disabled') toast('Ads are not available in this version of the game yet. Nothing was used up.', 3500);
+    else toast('No ad is available right now. Try again in a little while.', 3000);
   }
 
   /** Between games (game over / victory -> next game) is the only place for a midgame ad. */

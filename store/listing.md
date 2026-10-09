@@ -37,10 +37,12 @@ Tower Defense, Strategy, Magic, Defense, Monster
 ## Upload steps
 1. Sign in at https://developer.crazygames.com and start a **new game** (engine: **HTML5**).
 2. Game files: archives are NOT accepted. Open `store/upload/` (a copy of `dist/` from
-   `npm run build:basic`: the Basic Launch build, ads off as Basic Launch requires),
-   select everything inside (`index.html`, `favicon.svg`, `assets/`, `audio/`, `models/`)
-   and drag it into the upload zone. 103 files, 16 MB.
-   For a Full Launch later: `npm run build` (ads on) and upload `dist/` the same way.
+   `npm run build`: **ads on**, the user's choice on 2026-10-09), select everything inside
+   (`index.html`, `favicon.svg`, `assets/`, `audio/`, `models/`) and drag it into the upload
+   zone. 103 files, 16 MB. CrazyGames disables ads during Basic Launch on its side: the
+   first ad request then answers "disabled", the game says so in a short message, grants
+   nothing, uses nothing up and hides every ad offer. After Full Launch the same files
+   show ads with no new upload. (`npm run build:basic` = a build with no ad offers at all.)
 3. Title, description and controls: from this file. Category: Strategy. Tags: see above.
 4. Covers: `cover-landscape-1920x1080.png`, `cover-portrait-800x1200.png`, `cover-square-800x800.png`.
 5. Preview videos: `preview-landscape-1920x1080.mp4`, `preview-portrait-1080x1620.mp4`
@@ -53,4 +55,4 @@ Tower Defense, Strategy, Magic, Defense, Monster
 ## Files in this folder
 - `cover-*.png`: the three covers (rendered from the real game; title font Cinzel Decorative, OFL, see ASSETS.md)
 - `preview-*.mp4`: the two preview videos (not in git)
-- `upload/`: the game files to drag into the upload zone (not in git; rebuild with `npm run build:basic` and copy `dist/` here)
+- `upload/`: the game files to drag into the upload zone (not in git; rebuild with `npm run build` and copy `dist/` here)
