@@ -193,6 +193,8 @@ export const BALANCE = {
     every: 5,
     /** boss hit points = this x a normal creep of its wave */
     hpFactor: 8,
+    /** extra hp multiplier for the first bosses (wave 5, wave 10): 30% weaker, set by the user */
+    earlyHp: [0.7, 0.7],
     /** fraction of normal creep speed */
     speedFactor: 0.75,
     bountyBase: 15,

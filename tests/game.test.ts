@@ -149,7 +149,8 @@ test('a boss walks at the end of every 5th wave, tougher and slower', () => {
   assert.equal(bosses.length, 1);
   assert.equal(bosses[0].wave, BALANCE.bosses.every);
   const normal = seen.find((s) => s.wave === BALANCE.bosses.every && !s.boss)!;
-  assert.ok(bosses[0].hp >= normal.hp * BALANCE.bosses.hpFactor * 0.95 && bosses[0].speed < normal.speed, `boss ${bosses[0].hp} vs creep ${normal.hp}`);
+  const want = normal.hp * BALANCE.bosses.hpFactor * (BALANCE.bosses.earlyHp[0] ?? 1);
+  assert.ok(Math.abs(bosses[0].hp - want) <= want * 0.05 && bosses[0].speed < normal.speed, `boss ${bosses[0].hp} vs ${want}`);
   assert.equal(seen.filter((s) => s.wave === BALANCE.bosses.every).at(-1)!.boss, true, 'the boss comes last');
 });
 
@@ -255,4 +256,24 @@ test('construction: building and each upgrade take their time, and a working tow
   run(g, C.upgrade[1] + 0.2);
   assert.equal(t.level, 3);
   assert.deepEqual(done.map((d) => d.split('@')[0]), ['built', 'upgrade', 'upgrade']);
+});
+
+test('the first two bosses are 30% weaker, the later ones are not', () => {
+  const ratio = (wave: number) => {
+    const g = new Game(3);
+    g.lives = 1000;
+    g.wave = wave - 1;
+    let boss = 0;
+    let normal = 0;
+    g.on((e) => {
+      if (e.type === 'spawn' && e.creep.boss && !e.creep.elementBoss) boss = e.creep.maxHp;
+      if (e.type === 'spawn' && !e.creep.boss && !normal) normal = e.creep.maxHp;
+    });
+    g.callWave();
+    run(g, 10);
+    return boss / normal / BALANCE.bosses.hpFactor;
+  };
+  assert.ok(Math.abs(ratio(5) - 0.7) < 0.03, `wave 5: ${ratio(5)}`);
+  assert.ok(Math.abs(ratio(10) - 0.7) < 0.03, `wave 10: ${ratio(10)}`);
+  assert.ok(Math.abs(ratio(15) - 1) < 0.03, `wave 15: ${ratio(15)}`);
 });

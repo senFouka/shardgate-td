@@ -391,8 +391,8 @@ export class GameHud {
     } else {
       this.waveBtn.hidden = true;
     }
-    // offered once lives run low, never pushed: the player decides
-    this.refillBtn.hidden = !this.adsOn || !g.canRefillLives || g.lives > g.maxLives * 0.6;
+    // offered once a life is lost, never pushed: the player decides
+    this.refillBtn.hidden = !this.adsOn || !g.canRefillLives;
     this.refreshBar();
     this.refreshPicker();
     for (const [k, b] of this.buildBtns) b.classList.toggle('poor', g.gold < towerStats(k, 1).cost);

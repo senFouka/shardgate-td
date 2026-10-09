@@ -237,3 +237,7 @@ html, body { margin: 0; height: 100%; background: #0b0a08; overflow: hidden; tou
   .hud-refill { min-width: 52px; min-height: 44px; padding: 4px 10px; }
   .hud-pick-reroll { min-height: 64px; max-width: 110px; white-space: normal; font-size: 12px; line-height: 1.2; flex-direction: column; gap: 2px; }
 }
+/* ad offers stand apart from normal buttons: a warm gold-green look with the play badge */
+.hud-ad-btn { background: linear-gradient(#4b3a12, #2c220c); border-color: #f2c14b; color: #ffe7a8; box-shadow: 0 0 0 2px rgba(242,193,75,.25), var(--ui-shadow); }
+.hud-ad-btn:hover { box-shadow: 0 0 0 3px rgba(242,193,75,.55), var(--ui-shadow); }
+.hud-continue { background: linear-gradient(#3a6a3a, #24452a); border-color: #8fd68f; color: #e8ffe8; }

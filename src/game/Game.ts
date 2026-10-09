@@ -646,7 +646,8 @@ export class Game {
 
   private spawn(boss: boolean): void {
     const b = BALANCE.bosses;
-    const hp = Math.round(creepHp(this.wave) * (boss ? b.hpFactor * this.hpScale(this.diff.bossHp) : this.hpScale(this.diff.hp)));
+    const early = boss ? (b.earlyHp[Math.floor(this.wave / b.every) - 1] ?? 1) : 1;
+    const hp = Math.round(creepHp(this.wave) * (boss ? b.hpFactor * early * this.hpScale(this.diff.bossHp) : this.hpScale(this.diff.hp)));
     const c = this.newCreep(waveLook(this.wave, boss), hp, this.creepSpeed * (boss ? b.speedFactor : 1), Game.waveArmor(this.wave));
     c.boss = boss;
     c.bounty = Math.max(1, Math.round((boss ? b.bountyBase + this.wave : creepBounty(this.wave)) * this.diff.bounty));
