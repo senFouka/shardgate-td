@@ -284,3 +284,13 @@ html, body { margin: 0; height: 100%; background: #0b0a08; overflow: hidden; tou
   .hud-gold-offer { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
   .hud-gold-offer-text span { display: none; }
 }
+
+/* build buttons and Upgrade: when the gold is missing but the wave's gold ad is there */
+.hud-cost-ad { display: none; }
+.hud-cost-ad svg { width: 18px; height: 18px; display: block; }
+.hud-tower.ad .hud-tower-cost { display: inline-flex; align-items: center; gap: 4px; }
+.hud-tower.ad .hud-tower-cost::before { content: none; }
+.hud-tower.ad .hud-cost-ad { display: inline-block; }
+.hud-tower.ad { border-color: #f2c14b; box-shadow: 0 0 0 2px rgba(242,193,75,.3), var(--ui-shadow); }
+.hud-upgrade.ad { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: linear-gradient(#4b3a12, #2c220c); color: #ffe7a8; border-color: #f2c14b; }
+.hud-upgrade.ad .hud-ad-icon { width: 20px; height: 20px; }

@@ -64,6 +64,8 @@ export interface HudHooks {
   onAdContinue(): void;
   /** gold for the upgrade of this tower, then the upgrade */
   onAdUpgrade(tower: Tower): void;
+  /** gold for one tower of this kind, then build mode for it */
+  onAdBuild(kind: TowerId): void;
   onRestart(): void;
 }
 
@@ -117,7 +119,7 @@ export class GameHud {
       const digit = /^(?:Digit|Numpad)([1-8])$/.exec(e.code);
       if (digit) {
         const kind = [...this.buildBtns.keys()][Number(digit[1]) - 1];
-        if (kind) this.pick(this.picked === kind ? null : kind);
+        if (kind) this.pressTower(kind);
       }
       if (e.code === 'Space' && this.end.hidden) {
         e.preventDefault();
@@ -155,6 +157,18 @@ export class GameHud {
     this.hooks.onPickTower(kind);
   }
 
+  /**
+   * A build button was pressed: pick the tower, or, when its gold is missing
+   * and the wave's gold ad is still there, go straight to the ad.
+   */
+  private pressTower(kind: TowerId): void {
+    if (this.buildBtns.get(kind)?.classList.contains('ad')) {
+      this.hooks.onAdBuild(kind);
+      return;
+    }
+    this.pick(this.picked === kind ? null : kind);
+  }
+
   /** Bolt, Mortar, then every owned element (rebuilt when an element arrives). */
   private refreshBar(): void {
     const g = this.game;
@@ -171,11 +185,12 @@ export class GameHud {
         const b = el('button', { class: `ui-btn hud-tower${isElement(kind) ? ' el' : ''}`, type: 'button', 'aria-pressed': String(this.picked === kind), title: `${info.name} (${i + 1}): ${info.blurb}` }, [
           el('span', { class: 'hud-tower-icon', html: info.icon }),
           el('span', { class: 'hud-tower-name', text: isElement(kind) ? ELEMENTS[kind].name : info.name }),
-          el('span', { class: 'hud-tower-cost', text: String(towerStats(kind, 1).cost) }),
+          el('span', { class: 'hud-tower-cost' }, [el('span', { class: 'hud-cost-ad', html: AD_ICON }), String(towerStats(kind, 1).cost)]),
           ...(lvl ? [lvl] : []),
         ]);
         if (isElement(kind)) b.style.setProperty('--el', ELEMENTS[kind].color);
-        b.addEventListener('click', () => this.pick(this.picked === kind ? null : kind));
+        b.dataset.title = b.title;
+        b.addEventListener('click', () => this.pressTower(kind));
         this.buildBtns.set(kind, b);
         return b;
       }),
@@ -228,13 +243,11 @@ export class GameHud {
     this.panel.hidden = !t;
     if (!t) return;
     const upgrade = el('button', { class: 'ui-btn hud-upgrade', type: 'button' });
-    upgrade.addEventListener('click', () => this.hooks.onUpgrade(t));
+    upgrade.addEventListener('click', () => (upgrade.classList.contains('ad') ? this.hooks.onAdUpgrade(t) : this.hooks.onUpgrade(t)));
     const sell = el('button', { class: 'ui-btn hud-sell', type: 'button' });
     sell.addEventListener('click', () => this.hooks.onSell(t));
     const close = el('button', { class: 'ui-btn hud-close', type: 'button', 'aria-label': 'Close', text: '✕' });
     close.addEventListener('click', () => this.hooks.onCloseTower());
-    const adUp = el('button', { class: 'ui-btn hud-ad-btn hud-ad-upgrade', type: 'button', hidden: '' });
-    adUp.addEventListener('click', () => this.hooks.onAdUpgrade(t));
     this.panel.replaceChildren(
       el('div', { class: 'hud-panel-head' }, [
         el('span', { class: 'hud-tower-icon', html: TOWER_INFO[t.kind].icon }),
@@ -246,7 +259,6 @@ export class GameHud {
       el('div', { class: 'hud-effect' }),
       el('div', { class: 'hud-convert' }),
       el('div', { class: 'hud-actions' }, [upgrade, sell]),
-      adUp,
     );
     this.panelKey = '';
     this.refreshPanel(true);
@@ -314,15 +326,16 @@ export class GameHud {
     } else if (cost === null) {
       up.textContent = 'Max level';
       up.disabled = true;
+    } else if (g.gold < cost && this.canOfferGold()) {
+      // short of gold: the button pays for the upgrade with an ad
+      up.innerHTML = `${AD_ICON}<span>Upgrade ${cost} · ${Game.upgradeTime(t.level)}s</span>`;
+      up.disabled = false;
     } else {
       up.textContent = `Upgrade ● ${cost} · ${Game.upgradeTime(t.level)}s`;
       up.disabled = g.gold < cost;
     }
+    up.classList.toggle('ad', !t.work && cost !== null && g.gold < cost && this.canOfferGold());
     this.panel.querySelector('.hud-sell')!.textContent = `Sell +${g.refundFor(t)}`;
-    // can't afford the upgrade: an ad can pay for it (once per wave)
-    const adUp = this.panel.querySelector<HTMLButtonElement>('.hud-ad-upgrade')!;
-    adUp.hidden = !(cost !== null && !t.work && g.gold < cost && this.canOfferGold());
-    if (!adUp.hidden) adUp.innerHTML = `${AD_ICON}<span>Watch an ad: +${cost} gold &amp; upgrade</span>`;
   }
 
   /** True when an ad-for-gold offer can be made now. */
@@ -435,7 +448,14 @@ export class GameHud {
     this.refillBtn.hidden = !this.adsOn || !g.canRefillLives;
     this.refreshBar();
     this.refreshPicker();
-    for (const [k, b] of this.buildBtns) b.classList.toggle('poor', g.gold < towerStats(k, 1).cost);
+    // a tower you cannot afford shows the ad badge instead of the coin, while the wave's gold ad is there
+    const adGold = this.canOfferGold();
+    for (const [k, b] of this.buildBtns) {
+      const poor = g.gold < towerStats(k, 1).cost;
+      b.classList.toggle('ad', poor && adGold);
+      b.classList.toggle('poor', poor && !adGold);
+      b.title = poor && adGold ? 'Watch an ad to get the gold for this tower (once per wave)' : (b.dataset.title ?? '');
+    }
     this.refreshPanel();
   }
 }

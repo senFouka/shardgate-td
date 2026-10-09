@@ -139,6 +139,13 @@ async function boot(): Promise<void> {
     },
     onAdReroll: () => void rewarded(() => game.rerollOffer()),
     onAdRefill: () => void rewarded(() => game.refillLives()),
+    onAdBuild: (kind) =>
+      void rewarded(() => {
+        if (!game.grantAdGold(towerStats(kind, 1).cost)) return false;
+        hud.pick(kind); // now place it
+        toast(`+${towerStats(kind, 1).cost} gold. Tap the grass to build your ${TOWER_NAMES(kind)}.`, 3000);
+        return true;
+      }),
     onAdUpgrade: (t) =>
       void rewarded(() => {
         const cost = game.upgradeCost(t);
