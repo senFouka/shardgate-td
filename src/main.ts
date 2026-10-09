@@ -294,7 +294,7 @@ async function boot(): Promise<void> {
   if (!profile.hasSeenHint('build')) {
     const tip = () => {
       if (game.offer && game.pickIsFree) return void setTimeout(tip, 500);
-      toast('Pick a tower below, tap the grass beside the road to build it, then press Start.', 7000);
+      toast(game.phase === 'ready' ? 'Pick a tower below, tap the grass beside the road to build it, then press Start.' : 'Pick a tower below and tap the grass beside the road to build it.', 7000);
       profile.markHintSeen('build');
     };
     setTimeout(tip, 4600);

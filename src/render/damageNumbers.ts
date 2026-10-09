@@ -18,6 +18,10 @@ const ASPECT = CELL_W / CELL_H;
 const ADVANCE = 0.66;
 const MAX_DIGITS = 1600;
 const LIFE = 0.85;
+/** a new hit on a creep joins its number while that number is younger than this (s) */
+const MERGE_WINDOW = 0.35;
+/** ...and is this close to it (world units, about a creep and a half) */
+const MERGE_DIST = 1.1;
 
 interface Num {
   x: number;
@@ -28,6 +32,9 @@ interface Num {
   age: number;
   /** small sideways drift so numbers on one creep do not stack exactly */
   dx: number;
+  /** the creep it belongs to, and the damage it shows (hits add up) */
+  key: number;
+  value: number;
 }
 
 const VERT = /* glsl */ `
@@ -130,12 +137,25 @@ export class DamageNumbers {
     this.mesh.renderOrder = 30;
   }
 
-  /** A hit of `amount` at a world point (the creep's head). */
-  add(x: number, y: number, z: number, amount: number, crit: boolean): void {
+  /**
+   * A hit of `amount` at a world point (the creep's head). Hits close together in
+   * place and time (the same creep, or a tight crowd) add into one number that
+   * grows, instead of a pile of overlapping numbers. Crits join only crits.
+   */
+  add(x: number, y: number, z: number, amount: number, crit: boolean, key = -1): void {
+    for (let i = this.live.length - 1; i >= 0; i--) {
+      const d = this.live[i];
+      if (d.crit !== crit || d.age > MERGE_WINDOW) continue;
+      if (d.key !== key && Math.hypot(d.x - x, d.z - z) > MERGE_DIST) continue;
+      d.value += amount;
+      d.text = formatDamage(d.value) + (crit ? '!' : '');
+      d.age = Math.min(d.age, 0.05); // a little pop again
+      return;
+    }
     // the busier the screen, the fewer plain numbers (crits always show)
     const cap = Math.round(60 + 140 * this.density());
     if (!crit && this.live.length >= cap) return;
-    this.live.push({ x, y, z, text: formatDamage(amount) + (crit ? '!' : ''), crit, age: 0, dx: (Math.random() - 0.5) * 0.5 });
+    this.live.push({ x, y, z, text: formatDamage(amount) + (crit ? '!' : ''), crit, age: 0, dx: (Math.random() - 0.5) * 0.5, key, value: amount });
   }
 
   clear(): void {

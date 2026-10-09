@@ -99,7 +99,7 @@ export class GameView {
       else if (e.type === 'damage') {
         const c = e.creep;
         const top = (c.boss ? 2.7 : 1.2) + (c.flying ? 0.55 : 0);
-        this.numbers.add(cellX(c.col), top, cellZ(c.row), e.amount, e.crit);
+        this.numbers.add(cellX(c.col), top, cellZ(c.row), e.amount, e.crit, c.id);
       }
       else if (e.type === 'leak') this.leak(e.creep);
     });

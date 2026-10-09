@@ -54,3 +54,9 @@ Picked by the user on the audition page (2026-10-08). All **CC0 1.0**, licence r
 | creepDeath | Kenney packs (www.kenney.nl), one of: RPG Audio, Impact Sounds, Interface Sounds, Sci-Fi Sounds, Digital Audio (exact source in `slices/audition/sounds/backup_v1` notes) | Kenney | CC0 1.0 (`License.txt` in each zip) | first set, waiting for the user's pick |
 
 Tower shots, hits and shell blasts have no sound (user's choice).
+
+## Store pictures (`store/`, not shipped in the game)
+| File | Source | Licence | Notes |
+|---|---|---|---|
+| Title lettering on the covers and the first video frame | "Cinzel Decorative" Black by Natanael Gama, Google Fonts (https://fonts.google.com/specimen/Cinzel+Decorative) | SIL Open Font License 1.1 (OFL.txt read 2026-10-09) | used only to draw the title into the images; the font file is not distributed |
+| Everything else in the covers and videos | rendered from the game itself | ours | |

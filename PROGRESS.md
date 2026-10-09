@@ -101,6 +101,12 @@ Slices merged into main; direction B (Phaser + baked sprites) removed.
 - [x] Save/resume: checkpoint at every wave start (towers, gold, lives, elements, picks, ad helps, dice, guardians on the road); reload resumes at that wave in the ready phase; cleared on game over / new game.
 - [ ] In-game onboarding with controls, creep death sound pick, mobile placement offset, AdBlock check, covers/description/PEGI, final checklist.
 
+## Store package (2026-10-09, same layout as Element Warden / Monster Spire)
+- [x] `store/`: three covers (1920x1080, 800x1200, 800x800; title only, rendered from the game by picking the busiest frame), two preview videos (16:9 and 2:3, 17 s, 30 fps, no sound, title on the first frame; each rendered with its own camera, frame by frame), `listing.md` (title, description, controls, features, tags, upload steps), `upload/` = `npm run build:basic` output (103 files, 16 MB). Checked from the exact upload files at 1216x684 and 800x450: playable in 1.4-3 s, no ad offers, no failed requests, no errors.
+- [x] CrazyGames requirement pages read (gameplay, technical incl. user consent, account integration, sitelock/common fixes): added user-select none, page never scrolls, no browser context menu, sound wakes on tap after iOS suspends it. No accounts, no personal data (no privacy notice needed), no fullscreen button, English.
+- [x] Damage numbers: hits close together in place and time merge into one growing number (readable crowds). Game speed 1x / 1.5x only. Music never plays while the page is hidden or unfocused.
+- Open: sitelock (optional), the creep death sound pick, the ad-gold refund question.
+
 ## Notes for the proposal (1b)
 A throwaway sim (not in the repo) compared, at equal tower counts, a
 "gauntlet" (towers hugging the straight path) with a comb maze on the
