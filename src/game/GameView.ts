@@ -7,6 +7,7 @@ import { createCreepView, type CreepView } from '../render/creeps';
 import { DamageNumbers } from '../render/damageNumbers';
 import { TowerBatcher, type BatchHandle } from '../render/towerBatch';
 import { HealthBars } from '../render/healthBars';
+import { Decals } from '../render/decals';
 import type { CreepRoster } from '../render/creepModels';
 import { sfx } from '../systems/Sfx';
 import type { Creep, Game, Shot, Tower, TowerId } from './Game';
@@ -33,15 +34,15 @@ export class GameView {
   /** projectile meshes of the element towers that throw something solid */
   private readonly missiles: Partial<Record<TowerId, { geo: THREE.BufferGeometry; mat: THREE.Material }>> = {
     frost: {
-      geo: new THREE.OctahedronGeometry(0.07, 0).scale(1, 1, 3.2),
+      geo: new THREE.OctahedronGeometry(0.1, 0).scale(1, 1, 3.2),
       mat: new THREE.MeshStandardMaterial({ color: 0xcff0ff, emissive: new THREE.Color(0.6, 1.4, 2.4), emissiveIntensity: 1.3, roughness: 0.1, flatShading: true }),
     },
     stone: {
-      geo: new THREE.DodecahedronGeometry(0.13, 0),
+      geo: new THREE.DodecahedronGeometry(0.19, 0),
       mat: new THREE.MeshStandardMaterial({ color: 0x6f655a, roughness: 0.95, flatShading: true, emissive: new THREE.Color(0.5, 0.25, 0.05), emissiveIntensity: 0.6 }),
     },
     tide: {
-      geo: new THREE.IcosahedronGeometry(0.15, 1),
+      geo: new THREE.IcosahedronGeometry(0.2, 1),
       mat: new THREE.MeshStandardMaterial({ color: 0x2aa8d8, emissive: new THREE.Color(0.2, 1.1, 1.6), emissiveIntensity: 1.1, roughness: 0.05, transparent: true, opacity: 0.85 }),
     },
   };
@@ -55,6 +56,8 @@ export class GameView {
   private readonly batched = new Map<number, BatchHandle>();
   /** all creeps' health bars, one draw call */
   private readonly bars2 = new HealthBars();
+  /** scorch, frost, cracks, poison and wet marks left by impacts */
+  private readonly decals = new Decals();
   /** progress bars over towers that are being built, upgraded or converted */
   private readonly bars = new Map<number, { root: THREE.Group; fill: THREE.Mesh; top: number }>();
   private shake = 0;
@@ -68,7 +71,7 @@ export class GameView {
     this.fxAdd = new Particles(5000, true);
     this.fxSmoke = new Particles(1500, false, 1.2);
     this.numbers = new DamageNumbers(particleScale);
-    this.root.add(this.fxAdd.points, this.fxSmoke.points, this.range, this.numbers.mesh, this.batcher.root, this.bars2.mesh);
+    this.root.add(this.fxAdd.points, this.fxSmoke.points, this.range, this.numbers.mesh, this.batcher.root, this.bars2.mesh, this.decals.mesh);
     game.on((e) => {
       // sounds for what happens on the battlefield
       // tower shots and hits are silent (the user's choice)
@@ -136,6 +139,7 @@ export class GameView {
     for (const k of this.corpses) this.root.remove(k.view.root);
     for (const s of this.shells.values()) this.root.remove(s);
     this.numbers.clear();
+    this.decals.clear();
     this.batched.clear();
     this.batcher.dispose();
     for (const b of this.bars.values()) this.root.remove(b.root);
@@ -314,10 +318,27 @@ export class GameView {
     }
     const n = this.particleScale();
     if (c.elementBoss) this.elementColumn(p.x, p.y, c.elementBoss);
-    for (let i = 0; i < 14 * n; i++) this.fxAdd.emit({ x: p.x + rand(-0.2, 0.2), y: rand(0.2, 0.6), z: p.y + rand(-0.2, 0.2), vy: rand(0.8, 1.8), vx: rand(-0.2, 0.2), vz: rand(-0.2, 0.2), size: rand(0.12, 0.22), sizeEnd: 0.02, r: 1.6, g: 1.2, b: 2.6, life: rand(0.7, 1.2), drag: 0.5 });
-    for (let i = 0; i < 12 * n; i++) {
-      const a = (i / 12) * Math.PI * 2;
-      this.fxSmoke.emit({ x: p.x, y: 0.1, z: p.y, vx: Math.cos(a) * 1.4, vz: Math.sin(a) * 1.4, vy: 0.2, size: 0.25, sizeEnd: 0.6, r: 0.45, g: 0.38, b: 0.28, alpha: 0.45, life: 0.7, drag: 3 });
+    const big = c.boss ? 2 : 1;
+    const top = (c.boss ? 1.6 : 0.7) + (c.flying ? 0.55 : 0);
+    // the colour of its armor (or a soft violet), for the burst and the wisp
+    const tint: [number, number, number] = c.armor ? hdr(c.armor, 1.6) : [1.3, 1.0, 2.0];
+    // a soft flash, then the spirit rising as a column of motes
+    this.fxAdd.emit({ x: p.x, y: top, z: p.y, size: 1.1 * big, sizeEnd: 0.2, r: tint[0] * 0.8, g: tint[1] * 0.8, b: tint[2] * 0.8, life: 0.18 });
+    for (let i = 0; i < 18 * n * big; i++) this.fxAdd.emit({ x: p.x + rand(-0.25, 0.25) * big, y: rand(0.2, top), z: p.y + rand(-0.25, 0.25) * big, vy: rand(1.0, 2.4), vx: rand(-0.25, 0.25), vz: rand(-0.25, 0.25), size: rand(0.12, 0.26), sizeEnd: 0.02, r: tint[0], g: tint[1], b: tint[2], life: rand(0.7, 1.3), drag: 0.6 });
+    // chunky debris thrown out and falling back
+    for (let i = 0; i < 12 * n * big; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = rand(1.2, 3) * (c.boss ? 1.4 : 1);
+      this.fxSmoke.emit({ x: p.x, y: top * 0.6, z: p.y, vx: Math.cos(a) * sp, vz: Math.sin(a) * sp, vy: rand(1.5, 3.5), size: rand(0.08, 0.16) * big, sizeEnd: 0.05, r: 0.32, g: 0.27, b: 0.24, alpha: 0.95, life: rand(0.5, 0.8), gravity: 9, drag: 0.6 });
+    }
+    for (let i = 0; i < 14 * n; i++) {
+      const a = (i / 14) * Math.PI * 2;
+      this.fxSmoke.emit({ x: p.x, y: 0.1, z: p.y, vx: Math.cos(a) * 1.6 * big, vz: Math.sin(a) * 1.6 * big, vy: 0.2, size: 0.3 * big, sizeEnd: 0.75 * big, r: 0.48, g: 0.42, b: 0.33, alpha: 0.5, life: 0.8, drag: 3 });
+    }
+    if (c.boss) {
+      this.groundRing(p.x, p.y, 2.4, [1.6, 1.3, 0.9], 0.6);
+      this.decals.add('crack', p.x, p.y, 1.1, 8, this.time);
+      this.shake = Math.max(this.shake, 0.1);
     }
     // gold glints jump out
     for (let i = 0; i < 5; i++) this.fxAdd.emit({ x: p.x, y: 0.5, z: p.y, vx: rand(-0.6, 0.6), vy: rand(2, 3), vz: rand(-0.6, 0.6), size: 0.1, r: 3, g: 2.3, b: 0.6, life: 0.7, gravity: 6 });
@@ -389,6 +410,7 @@ export class GameView {
         for (let d = 0; d < dots; d++) {
           const t = d / dots;
           this.fxAdd.emit({ x: px + (nx - px) * t, y: py + (ny - py) * t, z: pz + (nz - pz) * t, size: thick, sizeEnd: thick * 0.3, r: 1.6, g: 1.9, b: 3.6, life: 0.14 });
+          if (d % 3 === 0) this.fxAdd.emit({ x: px + (nx - px) * t, y: py + (ny - py) * t, z: pz + (nz - pz) * t, size: thick * 3.2, sizeEnd: thick, r: 0.25, g: 0.3, b: 0.75, life: 0.16 });
         }
         px = nx;
         py = ny;
@@ -435,6 +457,7 @@ export class GameView {
     const kind = s.tower.kind;
     if (kind === 'gale') return; // drawn with the lightning
     if (kind === 'ember') {
+      this.decals.add('scorch', x, z, 0.45, 5, this.time);
       this.fxAdd.emit({ x, y: 0.6, z, size: 1, sizeEnd: 0.2, r: 3, g: 1.3, b: 0.3, life: 0.16 });
       for (let i = 0; i < 16 * n; i++) {
         const [dx, dy, dz] = randDir();
@@ -444,6 +467,7 @@ export class GameView {
       return;
     }
     if (kind === 'frost') {
+      this.decals.add('frost', x, z, Math.max(0.5, s.stats.splash), 4, this.time);
       this.fxAdd.emit({ x, y: 0.6, z, size: 0.9, sizeEnd: 0.2, r: 1.6, g: 2.4, b: 3.4, life: 0.14 });
       for (let i = 0; i < 14 * n; i++) {
         const [dx, dy, dz] = randDir();
@@ -453,6 +477,7 @@ export class GameView {
       return;
     }
     if (kind === 'stone') {
+      this.decals.add('crack', x, z, 0.55, 6, this.time);
       for (let i = 0; i < 12 * n; i++) {
         const [dx, dy, dz] = randDir();
         this.fxSmoke.emit({ x, y: 0.4, z, vx: dx * 2.2, vy: Math.abs(dy) * 2.8, vz: dz * 2.2, size: rand(0.08, 0.14), r: 0.42, g: 0.38, b: 0.32, alpha: 1, life: rand(0.4, 0.7), gravity: 7, drag: 1 });
@@ -466,6 +491,7 @@ export class GameView {
       return;
     }
     if (kind === 'venom') {
+      this.decals.add('poison', x, z, 0.38, 4, this.time);
       this.fxAdd.emit({ x, y: 0.6, z, size: 0.7, sizeEnd: 0.15, r: 1, g: 2.8, b: 0.4, life: 0.14 });
       for (let i = 0; i < 10 * n; i++) {
         const [dx, dy, dz] = randDir();
@@ -476,6 +502,7 @@ export class GameView {
     }
     if (kind === 'tide') {
       const splash = s.stats.splash;
+      this.decals.add('wet', x, z, splash * 0.9, 4, this.time);
       this.fxAdd.emit({ x, y: 0.3, z, size: splash * 1.8, sizeEnd: 0.3, r: 0.8, g: 2.2, b: 3, life: 0.18 });
       for (let i = 0; i < 34 * n; i++) {
         const a = Math.random() * Math.PI * 2;
@@ -506,6 +533,7 @@ export class GameView {
       this.fxSmoke.emit({ x: x + rand(-0.3, 0.3), y: 0.25, z: z + rand(-0.3, 0.3), vx: rand(-0.8, 0.8), vy: rand(0.4, 1.1), vz: rand(-0.8, 0.8), size: 0.4, sizeEnd: 1.2, r: 0.16, g: 0.14, b: 0.12, alpha: 0.55, life: rand(0.9, 1.4), drag: 1.5 });
     }
     this.groundRing(x, z, splash, [2.5, 1.3, 0.5], 0.45);
+    this.decals.add('scorch', x, z, splash * 0.8, 6, this.time);
     this.shake = Math.max(this.shake, 0.06);
   }
 
@@ -546,15 +574,15 @@ export class GameView {
         else m.rotation.x += dt * 9;
       }
       if (kind === 'ember') {
-        this.fxAdd.emit({ x, y, z, size: 0.4, sizeEnd: 0.1, r: 3, g: 1.3, b: 0.3, life: 0.08 });
-        if (Math.random() < n) this.fxAdd.emit({ x: x + rand(-0.05, 0.05), y, z: z + rand(-0.05, 0.05), vy: 0.6, size: rand(0.12, 0.22), sizeEnd: 0.02, r: 3, g: rand(0.6, 1.2), b: 0.12, life: 0.35 });
+        this.fxAdd.emit({ x, y, z, size: 0.62, sizeEnd: 0.18, r: 2.4, g: 1.0, b: 0.22, life: 0.08 });
+        for (let k = 0; k < 2; k++) if (Math.random() < n) this.fxAdd.emit({ x: x + rand(-0.07, 0.07), y, z: z + rand(-0.07, 0.07), vy: 0.7, size: rand(0.18, 0.3), sizeEnd: 0.03, r: 2.2, g: rand(0.5, 0.95), b: 0.1, life: rand(0.35, 0.55) });
         if (Math.random() < 0.3 * n) this.fxSmoke.emit({ x, y, z, vy: 0.5, size: 0.15, sizeEnd: 0.4, r: 0.15, g: 0.12, b: 0.1, alpha: 0.35, life: 0.6 });
       } else if (kind === 'frost') {
         if (Math.random() < n) this.fxAdd.emit({ x, y, z, size: 0.12, sizeEnd: 0.02, r: 1.4, g: 2.2, b: 3.2, life: 0.35, vy: -0.3 });
       } else if (kind === 'stone') {
         if (Math.random() < 0.6 * n) this.fxSmoke.emit({ x, y, z, size: 0.12, sizeEnd: 0.3, r: 0.45, g: 0.4, b: 0.33, alpha: 0.5, life: 0.4 });
       } else if (kind === 'venom') {
-        this.fxAdd.emit({ x, y, z, size: 0.3, sizeEnd: 0.08, r: 0.9, g: 2.6, b: 0.3, life: 0.08 });
+        this.fxAdd.emit({ x, y, z, size: 0.45, sizeEnd: 0.12, r: 0.7, g: 2.0, b: 0.25, life: 0.08 });
         if (Math.random() < n) this.fxAdd.emit({ x, y, z, vy: -0.8, size: 0.08, r: 0.7, g: 2.2, b: 0.25, life: 0.4, gravity: 3 });
       }
       return;
@@ -675,6 +703,8 @@ export class GameView {
     this.fxAdd.update(dt);
     this.fxSmoke.update(dt);
     this.numbers.update(dt);
+    this.decals.setBudget(this.particleScale());
+    this.decals.update(this.time);
     this.shake = Math.max(0, this.shake - dt * 0.3);
   }
 }
