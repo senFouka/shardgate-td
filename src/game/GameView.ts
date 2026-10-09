@@ -105,6 +105,11 @@ export class GameView {
     });
   }
 
+  /** Shows towers the game already has (a game resumed from a save). */
+  showExisting(): void {
+    for (const t of this.game.towers) if (!this.towers.has(t.id)) this.addTower(t, true);
+  }
+
   /** Starts loading the bosses of the elements on offer, so a summon shows its real model. */
   prefetchOffer(): void {
     for (const el of this.game.offer ?? []) void this.roster.prefetchLook(ELEMENT_BOSS_CREEPS[el]);

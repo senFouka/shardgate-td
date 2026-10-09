@@ -1,7 +1,8 @@
 import './ui/ui.css';
 import * as THREE from 'three';
 import { platform } from './services/platform';
-import { loadSavesAtBoot, setPendingSave } from './systems/SaveSystem';
+import { loadSavesAtBoot, runSave, setPendingSave, takePendingSave, type RunSave } from './systems/SaveSystem';
+import { DIFFICULTY_NAMES } from './data/difficulty';
 import { profile } from './systems/ProfileStore';
 import { sfx } from './systems/Sfx';
 import { music } from './systems/Music';
@@ -227,17 +228,27 @@ async function boot(): Promise<void> {
   hud.setSpeed(profile.speed);
   hud.setAdsEnabled(platform.adsEnabled());
 
-  function startGame(): void {
+  /** A new game, or (with a save) the saved one at the start of its saved wave. */
+  function startGame(save: RunSave | null = null): void {
     scene.remove(view.root);
     view.reset();
-    game = new Game(undefined, profile.difficulty);
+    if (save) {
+      game = Game.fromSave(save);
+      profile.setDifficulty(game.difficulty);
+    } else {
+      game = new Game(undefined, profile.difficulty);
+      runSave.clear(); // a new game replaces any unfinished one
+    }
     view = new GameView(game, creepModels, () => renderer.particleScale);
     view.setScale(renderer.bufferHeight(), camera.fov);
     scene.add(view.root);
     hud.bind(game);
     input.bind(game, view);
     game.on((e) => {
+      // checkpoint at every wave start: closing the page loses at most the wave in progress
+      if (e.type === 'wave-start' && game.lastCheckpoint) runSave.write(game.lastCheckpoint);
       if (e.type === 'over') {
+        runSave.clear();
         platform.gameplayStop();
         hud.showEnd(e.won, e.wave);
         profile.noteWave(game.difficulty, e.wave);
@@ -247,11 +258,14 @@ async function boot(): Promise<void> {
       if (e.type === 'element') toast(e.level === 1 ? `${ELEMENTS[e.element].name} unlocked: build the ${ELEMENTS[e.element].tower}, or convert a Bolt or Mortar.` : `${ELEMENTS[e.element].name} is now level ${e.level}: all its towers hit harder.`, 4500);
     });
     view.prefetchOffer();
+    view.showExisting();
     platform.gameplayStart();
   }
   hud.bind(game);
   input.bind(game, view);
-  startGame();
+  const resumeFrom = takePendingSave();
+  startGame(resumeFrom);
+  if (resumeFrom) toast(`Welcome back! Wave ${resumeFrom.wave} on ${DIFFICULTY_NAMES[game.difficulty]} is ready: press Start. (Settings > Reset game starts over.)`, 6000);
   // first-time tip, after the first element pick (the pick panel explains itself)
   if (!profile.hasSeenHint('build')) {
     const tip = () => {

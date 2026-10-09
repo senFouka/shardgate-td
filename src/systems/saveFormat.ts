@@ -17,26 +17,46 @@ export type GameSpeed = 1 | 2 | 3;
 export const RUN_VERSION = 1;
 export const PROFILE_VERSION = 1;
 
-/** One placed tower, enough to rebuild the maze. */
+/** One placed tower. `id` is the tower kind (bolt, mortar, ember...). */
 export interface SavedTower {
   id: string;
   col: number;
   row: number;
   level: number;
+  /** gold put into it (refunds) and its kill count */
+  spent?: number;
+  kills?: number;
+}
+
+/** The rest of a game's state at a wave start (elements, picks, ad helps, dice). */
+export interface SavedGameState {
+  elements: Record<string, number>;
+  offer: string[] | null;
+  picksOwed: number;
+  picksMade: number;
+  offerRerolled: boolean;
+  livesRefilled: boolean;
+  continued: boolean;
+  adGoldWave: number;
+  rng: number;
+  /** element bosses that were on the road: summoned again when play resumes */
+  guardians: string[];
 }
 
 /**
- * Everything needed to put the player back into an unfinished game.
- * Save/resume is Milestone 2; fields will grow then.
+ * Everything needed to put the player back into an unfinished game: a
+ * checkpoint taken as a wave starts. Resuming replays that wave from its start.
  */
 export interface RunSave {
   v: number;
   difficulty: DifficultyId;
-  /** the wave to resume at (from the start of its build phase) */
+  /** the wave to resume at (it starts again when the player presses Start) */
   wave: number;
   gold: number;
   lives: number;
   towers: SavedTower[];
+  /** missing in very old saves: then a fresh element state */
+  state?: SavedGameState;
   savedAt: number;
 }
 

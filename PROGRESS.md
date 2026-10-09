@@ -94,6 +94,13 @@ Slices merged into main; direction B (Phaser + baked sprites) removed.
 
 - Damage numbers over every direct hit (one GPU draw call, glyph atlas; `render/damageNumbers.ts`): white, crits orange, 20% bigger, with "!". Cap on live numbers follows the particle density preset; crits always show. Crit: 5% chance (was 10%, user 2026-10-09), ×2 (`BALANCE.crit`, towers may override `critChance`), shown in the tower panel. Normal creeps +20% hp (`waves.normalHp`), bosses unchanged.
 
+## CrazyGames readiness (path 1, keeping every feature; user 2026-10-09)
+- [x] Performance: towers baked (still parts merged, orbiting parts as rings), still parts of all towers in one BatchedMesh per material, shared gem materials, no shadows from small moving parts, health bars in one draw. Heavy scene (40 L3 towers, a wave; CPU x4 throttle, phone viewport): Low 17-24 -> 36-39 fps, Medium 17 -> 26-30 fps. Same look.
+- [x] Tower glow halved (`TOWER_GLOW`), music stops while the page is unfocused/hidden, normal creeps x1.38 hp, wave chip without "/ 40".
+- [x] Game speed 1x/2x/3x (button + key F, saved in the profile).
+- [x] Save/resume: checkpoint at every wave start (towers, gold, lives, elements, picks, ad helps, dice, guardians on the road); reload resumes at that wave in the ready phase; cleared on game over / new game.
+- [ ] In-game onboarding with controls, creep death sound pick, mobile placement offset, AdBlock check, covers/description/PEGI, final checklist.
+
 ## Notes for the proposal (1b)
 A throwaway sim (not in the repo) compared, at equal tower counts, a
 "gauntlet" (towers hugging the straight path) with a comb maze on the

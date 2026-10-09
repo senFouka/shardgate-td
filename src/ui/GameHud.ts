@@ -445,7 +445,7 @@ export class GameHud {
       } else this.armor.textContent = 'No armor';
     }
     // difficulty is chosen before the first wave, then locked for the game
-    this.diffRow.hidden = g.phase !== 'ready';
+    this.diffRow.hidden = g.phase !== 'ready' || g.wave > 0; // a resumed game keeps its difficulty
     if (g.phase === 'ready') {
       this.waveBtn.hidden = false;
       this.waveBtn.textContent = 'Start';

@@ -23,6 +23,7 @@ import { ELEMENT_ORDER, WAVE_ARMOR, elementMultiplier, type ElementId } from '..
 import { ELEMENT_BOSS_CREEPS, isFlyingLook, waveLook } from '../data/creeps.ts';
 import { MAP, buildGrid, routePolyline } from '../data/map.ts';
 import type { DifficultyId } from '../data/difficulty.ts';
+import type { RunSave, SavedTower } from '../systems/saveFormat.ts';
 
 export type TowerId = TowerKind;
 
@@ -282,7 +283,87 @@ export class Game {
     this.startWave();
   }
 
+  /**
+   * The game as it stands just before the next wave starts: what a save
+   * holds. Work in progress counts as done (it was paid for).
+   */
+  checkpoint(): Omit<RunSave, 'v' | 'savedAt'> {
+    const towers: SavedTower[] = this.towers.map((t) => {
+      const w = t.work;
+      return {
+        id: w?.type === 'convert' && w.to ? w.to : t.kind,
+        col: t.col,
+        row: t.row,
+        level: w?.type === 'upgrade' ? t.level + 1 : t.level,
+        spent: t.spent,
+        kills: t.kills,
+      };
+    });
+    return {
+      difficulty: this.difficulty,
+      wave: this.wave + 1,
+      gold: this.gold,
+      lives: this.lives,
+      towers,
+      state: {
+        elements: { ...this.elements },
+        offer: this.offer ? [...this.offer] : null,
+        picksOwed: this.picksOwed,
+        picksMade: this.picksMade,
+        offerRerolled: this.offerRerolled,
+        livesRefilled: this.livesRefilled,
+        continued: this.continued,
+        adGoldWave: this.adGoldWave,
+        rng: this.rng,
+        guardians: this.creeps.filter((c) => c.alive && c.elementBoss).map((c) => c.elementBoss!),
+      },
+    };
+  }
+
+  /** The checkpoint taken when the current wave started (null before the first wave). */
+  lastCheckpoint: Omit<RunSave, 'v' | 'savedAt'> | null = null;
+  /** element bosses to summon again when the resumed game's first wave starts */
+  private resumeGuardians: ElementId[] = [];
+
+  /** Rebuilds a game from a save: ready to replay the saved wave from its start. */
+  static fromSave(save: RunSave): Game {
+    const s = save.state;
+    const g = new Game(s?.rng ?? undefined, save.difficulty);
+    g.wave = Math.max(0, save.wave - 1);
+    g.gold = save.gold;
+    g.lives = save.lives;
+    for (const st of save.towers) {
+      const kind = st.id as TowerId;
+      if (!BALANCE.towers[kind] || !g.grass[st.row * MAP.cols + st.col] || g.towerAt(st.col, st.row)) continue;
+      const level = Math.max(1, Math.min(MAX_TOWER_LEVEL, st.level));
+      let spent = 0;
+      for (let l = 1; l <= level; l++) spent += towerStats(kind, l).cost;
+      g.towers.push({
+        id: g.nextId++, kind, col: st.col, row: st.row, level, spent: st.spent ?? spent, builtAtWave: -1,
+        cooldown: 0, kills: st.kills ?? 0, damageDealt: 0, work: null,
+      });
+    }
+    if (s) {
+      for (const el of ELEMENT_ORDER) g.elements[el] = Math.max(0, Math.floor(s.elements[el] ?? 0));
+      g.offer = s.offer ? (s.offer.filter((e) => (ELEMENT_ORDER as readonly string[]).includes(e)) as ElementId[]) : null;
+      if (g.offer && g.offer.length === 0) g.offer = null;
+      g.picksOwed = s.picksOwed;
+      g.picksMade = s.picksMade;
+      g.offerRerolled = s.offerRerolled;
+      g.livesRefilled = s.livesRefilled;
+      g.continued = s.continued;
+      g.adGoldWave = s.adGoldWave;
+      g.resumeGuardians = s.guardians.filter((e) => (ELEMENT_ORDER as readonly string[]).includes(e)) as ElementId[];
+    }
+    g.resumed = true;
+    return g;
+  }
+
+  /** True for a game rebuilt from a save (until it ends). */
+  resumed = false;
+
   private startWave(): void {
+    this.lastCheckpoint = this.checkpoint();
     this.wave++;
     this.countdown = 0;
     this.waveTime = 0;
@@ -290,6 +371,8 @@ export class Game {
     this.toSpawn = BALANCE.waves.size + (this.bossPending ? 1 : 0);
     this.spawnTimer = 0;
     this.emit({ type: 'wave-start', wave: this.wave, boss: this.bossPending });
+    // element bosses that were walking when the game was saved come back
+    for (const el of this.resumeGuardians.splice(0)) this.spawnElementBoss(el);
     if (Game.isPickWave(this.wave)) {
       this.picksOwed++;
       if (!this.offer) {
