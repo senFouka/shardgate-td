@@ -146,6 +146,11 @@ async function boot(): Promise<void> {
         toast(`+${towerStats(kind, 1).cost} gold. Tap the grass to build your ${TOWER_NAMES(kind)}.`, 3000);
         return true;
       }),
+    onSpeed: () => {
+      const next = profile.speed === 1 ? 2 : profile.speed === 2 ? 3 : 1;
+      profile.setSpeed(next);
+      hud.setSpeed(next);
+    },
     onAdUpgrade: (t) =>
       void rewarded(() => {
         const cost = game.upgradeCost(t);
@@ -219,6 +224,7 @@ async function boot(): Promise<void> {
     startGame();
   }
   platform.onAdsEnabledChange((on) => hud.setAdsEnabled(on));
+  hud.setSpeed(profile.speed);
   hud.setAdsEnabled(platform.adsEnabled());
 
   function startGame(): void {
@@ -304,12 +310,14 @@ async function boot(): Promise<void> {
     if (!paused && document.visibilityState === 'visible') graphics.sampleFrame(realDt * 1000);
     const gdt = paused || adPlaying ? 0 : dt;
     time += gdt;
-    game.advance(gdt);
+    // game speed: the rules and the battlefield effects run faster; camera, UI and music do not
+    const sdt = gdt * profile.speed;
+    game.advance(sdt);
     rig.update(dt);
     followSun();
     mapView.route.points.visible = game.phase === 'ready';
     mapView.update(time, gdt);
-    view.update(gdt, camera);
+    view.update(sdt, camera);
     const s = view.shakeAmount;
     if (s > 0) camera.position.add(new THREE.Vector3((Math.random() - 0.5) * s, (Math.random() - 0.5) * s, 0));
     hud.update();

@@ -66,6 +66,8 @@ export interface HudHooks {
   onAdUpgrade(tower: Tower): void;
   /** gold for one tower of this kind, then build mode for it */
   onAdBuild(kind: TowerId): void;
+  /** next game speed (1x -> 2x -> 3x -> 1x) */
+  onSpeed(): void;
   onRestart(): void;
 }
 
@@ -77,6 +79,8 @@ export class GameHud {
   private readonly waveName = el('span', { class: 'hud-sub' });
   private readonly armor = el('span', { class: 'hud-armor' });
   private readonly waveBtn = el('button', { class: 'ui-btn hud-wave-btn', type: 'button' });
+  /** game speed 1x / 2x / 3x (free, never behind an ad) */
+  private readonly speedBtn = el('button', { class: 'ui-btn hud-speed', type: 'button', title: 'Game speed (F)' });
   private readonly refillBtn = el('button', { class: 'ui-btn hud-ad-btn hud-refill', type: 'button', hidden: '', title: 'Watch an ad to refill your lives (once per game)' });
   /** false when the platform has ads switched off: every ad offer is hidden */
   private adsOn = true;
@@ -104,7 +108,9 @@ export class GameHud {
       chip('<svg viewBox="0 0 24 24" fill="none" stroke="#9fc8ff" stroke-width="1.8"><path d="M3 12c3-4 6-4 9 0s6 4 9 0"/><path d="M3 17c3-4 6-4 9 0s6 4 9 0" opacity=".5"/></svg>', el('div', { class: 'hud-wave-line' }, [this.wave, this.diffTag]), this.waveName, this.armor),
       this.refillBtn,
       this.waveBtn,
+      this.speedBtn,
     ]);
+    this.speedBtn.addEventListener('click', () => this.hooks.onSpeed());
     this.refillBtn.innerHTML = `${AD_ICON}<span>Refill lives</span>`;
     this.refillBtn.addEventListener('click', () => this.hooks.onAdRefill());
     this.waveBtn.addEventListener('click', () => this.game.callWave());
@@ -116,6 +122,7 @@ export class GameHud {
         this.hooks.onCloseTower();
       }
       if (e.code === 'KeyU' && this.shown) this.hooks.onUpgrade(this.shown);
+      if (e.code === 'KeyF') this.hooks.onSpeed();
       const digit = /^(?:Digit|Numpad)([1-8])$/.exec(e.code);
       if (digit) {
         const kind = [...this.buildBtns.keys()][Number(digit[1]) - 1];
@@ -145,6 +152,12 @@ export class GameHud {
     this.adsOn = on;
     this.offerKey = '-';
     if (!this.end.hidden) this.end.querySelector<HTMLElement>('.hud-continue')?.toggleAttribute('hidden', !on);
+  }
+
+  setSpeed(speed: number): void {
+    this.speedBtn.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6l7 6-7 6zM12 6l7 6-7 6z" fill="currentColor"/></svg><span>${speed}×</span>`;
+    this.speedBtn.classList.toggle('fast', speed > 1);
+    this.speedBtn.setAttribute('aria-label', `Game speed ${speed} times`);
   }
 
   get pickedTower(): TowerId | null {

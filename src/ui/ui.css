@@ -306,3 +306,11 @@ html, body { margin: 0; height: 100%; background: #0b0a08; overflow: hidden; tou
   .hud-stats { font-size: 12px; gap: 3px 10px; }
   #ui:has(.hud-panel:not([hidden])) .hud-build { display: none; }
 }
+
+/* ------------------------------------------------------------ game speed */
+.hud-speed { min-height: 52px; min-width: 64px; gap: 4px; font-size: 15px; font-variant-numeric: tabular-nums; }
+.hud-speed svg { width: 18px; height: 18px; }
+.hud-speed.fast { border-color: #f2c14b; color: #ffe7a8; }
+@media (max-width: 760px), (max-height: 480px) {
+  .hud-speed { min-height: 44px; min-width: 56px; }
+}
