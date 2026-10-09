@@ -3,6 +3,7 @@ import { isElement, type TowerId } from '../game/Game';
 import { createElementTower } from './elementTowers';
 import { Particles, rand } from './particles';
 import { buildOrnate } from './ornate';
+import { boltBody, mortarBody } from './basicBodies';
 import { bakeStatic, dynamic } from './bake';
 import { animatedMaterial } from './towerBatch';
 
@@ -47,17 +48,6 @@ function shadows(g: THREE.Object3D): void {
       m.receiveShadow = true;
     }
   });
-}
-
-/** Hexagonal stone plinth for the Bolt tower. */
-function plinth(radius: number): THREE.Group {
-  const g = new THREE.Group();
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius * 1.1, 0.14, 6), MATS.stoneDark);
-  base.position.y = 0.07;
-  const top = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.88, radius, 0.1, 6), MATS.stone);
-  top.position.y = 0.19;
-  g.add(base, top);
-  return g;
 }
 
 /**
@@ -111,36 +101,16 @@ function turn(head: THREE.Object3D, want: number, dt: number, speed: number): vo
 function boltTower(fx: Particles, level: number): TowerView {
   const g = new THREE.Group();
   const L = Math.max(1, Math.min(3, level));
-  g.add(plinth(0.42 + (L - 1) * 0.03));
-  const postH = 0.5 + (L - 1) * 0.22;
-  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2 + (L - 1) * 0.02, postH, 8), MATS.stone);
-  post.position.y = 0.23 + postH / 2;
-  const collarY = 0.23 + postH + 0.03;
-  const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.17, 0.08, 8), MATS.brass);
-  collar.position.y = collarY;
-  g.add(post, collar);
-  if (L >= 2) {
-    for (const f of [0.25, 0.7]) {
-      const band = new THREE.Mesh(new THREE.TorusGeometry(0.175 + (1 - f) * 0.02, 0.022, 5, 8), GOLD_TRIM);
-      band.rotation.x = Math.PI / 2;
-      band.position.y = 0.23 + postH * f;
-      g.add(band);
-    }
-  }
+  // a stone watchtower with a timber platform (basicBodies.ts)
+  const body = boltBody(L);
+  g.add(body.group);
+  const collarY = body.topY;
   const runeRing = dynamic(new THREE.Group());
   if (L >= 3) {
-    for (let i = 0; i < 4; i++) {
-      const a = (i / 4) * Math.PI * 2;
-      const blade = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.32, 4), GOLD_TRIM);
-      blade.position.set(Math.cos(a) * 0.2, collarY + 0.12, Math.sin(a) * 0.2);
-      blade.rotation.z = Math.cos(a) * -0.45;
-      blade.rotation.x = Math.sin(a) * 0.45;
-      g.add(blade);
-    }
     for (let i = 0; i < 3; i++) {
       const a = (i / 3) * Math.PI * 2;
       const r = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.13, 0.03), MATS.boltGlow);
-      r.position.set(Math.cos(a) * 0.34, collarY - 0.1 + Math.sin(i * 2.1) * 0.04, Math.sin(a) * 0.34);
+      r.position.set(Math.cos(a) * 0.5, collarY + 0.35 + Math.sin(i * 2.1) * 0.04, Math.sin(a) * 0.5);
       r.rotation.y = -a;
       runeRing.add(r);
     }
@@ -149,7 +119,11 @@ function boltTower(fx: Particles, level: number): TowerView {
 
   // the head: an arbalest with brass limbs and a glowing bolt
   const head = dynamic(new THREE.Group());
-  head.position.y = collarY + 0.1;
+  // a turntable on the platform
+  const turntable = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, 0.3, 10), MATS.iron);
+  turntable.position.y = collarY + 0.15;
+  g.add(turntable);
+  head.position.y = collarY + 0.36;
   const stock = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, 0.62 + (L - 1) * 0.06), MATS.wood);
   stock.position.z = 0.06;
   head.add(stock);
@@ -262,10 +236,12 @@ export function orbTower(fx: Particles, tier: number): TowerView {
  */
 function mortarTower(fx: Particles, level: number): TowerView {
   const g = new THREE.Group();
-  const orn = buildOrnate({ panel: 0x8e1f22, glow: new THREE.Color(1.6, 0.55, 0.15), tier: level, shape: 'drum' });
-  g.add(orn.group);
+  // a round stone bastion with battlements (basicBodies.ts)
+  const body = mortarBody(Math.max(1, Math.min(3, level)));
+  g.add(body.group);
+  const orn = { update(_t: number) {}, pulse() {} };
   const head = dynamic(new THREE.Group());
-  head.position.y = orn.topY + 0.02;
+  head.position.y = body.topY + 0.02;
   const cradle = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.24, 0.1, 8), MATS.iron);
   cradle.position.y = 0.05;
   head.add(cradle);
