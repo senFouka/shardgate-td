@@ -11,6 +11,7 @@ import { GameRenderer } from './render/GameRenderer';
 import { GraphicsController } from './render/GraphicsController';
 import { CameraRig } from './render/CameraRig';
 import { MapView } from './render/MapView';
+import { Onboarding } from './ui/Onboarding';
 import { setCreepOutlines } from './render/creeps';
 import { Particles } from './render/particles';
 import { CreepRoster } from './render/creepModels';
@@ -151,11 +152,14 @@ async function boot(): Promise<void> {
   let view = new GameView(game, creepModels, () => renderer.particleScale);
   scene.add(view.root);
 
+  /** the first game's walk-through (null once done or skipped) */
+  let onboarding: Onboarding | null = null;
   const hud = new GameHud({
     waveName: (wave, boss) => creepModels.nameFor(wave, boss),
     onPickTower: (kind) => {
       input.pick(kind);
       mapView.setGridVisible(!!kind);
+      onboarding?.towerPicked(!!kind);
     },
     onSell: (t) => {
       game.sell(t);
@@ -307,7 +311,8 @@ async function boot(): Promise<void> {
       }
       if (e.type === 'wave-start' && e.wave > 1) profile.addWaveCleared();
       if (e.type === 'summon') toast(`${CREEP_LOOKS[e.creep.look]?.name ?? 'A guardian'} walks the road. ${game.elements[e.element] ? `Defeat it to raise ${ELEMENTS[e.element].name} to level ${game.elements[e.element] + 1}.` : `Defeat it to claim ${ELEMENTS[e.element].name}.`}`, 4500);
-      if (e.type === 'element') toast(e.level === 1 ? `${ELEMENTS[e.element].name} unlocked: build the ${ELEMENTS[e.element].tower}, or convert a Bolt or Mortar.` : `${ELEMENTS[e.element].name} is now level ${e.level}: all its towers hit harder.`, 4500);
+      // the tutorial explains the first element itself
+      if (e.type === 'element' && !(onboarding && e.level === 1 && game.wave === 0)) toast(e.level === 1 ? `${ELEMENTS[e.element].name} unlocked: build the ${ELEMENTS[e.element].tower}, or convert a Bolt or Mortar.` : `${ELEMENTS[e.element].name} is now level ${e.level}: all its towers hit harder.`, 4500);
     });
     view.prefetchOffer();
     view.showExisting();
@@ -325,14 +330,14 @@ async function boot(): Promise<void> {
   const resumeFrom = takePendingSave();
   startGame(resumeFrom);
   if (resumeFrom) toast(`Welcome back! Wave ${resumeFrom.wave} on ${DIFFICULTY_NAMES[game.difficulty]} is ready: press Start. (Settings > Reset game starts over.)`, 6000);
-  // first-time tip, after the first element pick (the pick panel explains itself)
-  if (!profile.hasSeenHint('build')) {
-    const tip = () => {
-      if (game.offer && game.pickIsFree) return void setTimeout(tip, 500);
-      toast(game.phase === 'ready' ? 'Pick a tower below, tap the grass beside the road to build it, then press Start.' : 'Pick a tower below and tap the grass beside the road to build it.', 7000);
-      profile.markHintSeen('build');
-    };
-    setTimeout(tip, 4600);
+  // the first game teaches itself: a skippable walk-through inside gameplay
+  if (!profile.hasSeenHint('tutorial') && game.wave === 0) {
+    onboarding = new Onboarding(game, scene, {
+      done: () => {
+        profile.markHintSeen('tutorial');
+        onboarding = null;
+      },
+    });
   }
 
   renderer.onResize(() => {
@@ -355,6 +360,7 @@ async function boot(): Promise<void> {
   const settings = new SettingsPanel(graphics, {
     // a reset is the player's own choice, not a break between games: no ad
     onReset: () => {
+      onboarding?.skip();
       if (!focusPause.visible) paused = false;
       startGame();
     },
@@ -400,6 +406,7 @@ async function boot(): Promise<void> {
     const s = view.shakeAmount;
     if (s > 0) camera.position.add(new THREE.Vector3((Math.random() - 0.5) * s, (Math.random() - 0.5) * s, 0));
     hud.update();
+    onboarding?.update(realDt);
     // calm theme in menus and before the first wave, battle theme while waves run
     music.play(game.phase === 'playing' && !settings.isOpen ? 'battle' : 'menu');
     music.update(realDt);

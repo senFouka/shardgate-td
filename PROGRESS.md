@@ -114,6 +114,15 @@ Slices merged into main; direction B (Phaser + baked sprites) removed.
 - [x] Cost kept low: static scenery merged with vertex colours into a few meshes, static matrices frozen, trees cast no shadows. A/B in one page (CPU x4, phone): the new environment costs ~0-3 fps. Build 17 MB, load to playable 2.7-3.7 s.
 - Next stages: 2 gates as the hero of the scene, 3 distinct tower silhouettes per element, 4 bigger effects, 5 one coherent style (outline), 6 visual onboarding.
 
+## Visual overhaul, stages 2-6 (2026-10-09/10)
+- [x] 2 Gates: tall stone arches on carved gold-banded pillars, stepped dais with rune ring, calm swirling vortex (no glare after user feedback: no light column, colours under the bloom threshold), floating crystals, motes out of the blue gate / into the red; the Shard monument behind. Camera can pan beyond the field (most toward the gates) and zoom out a little further.
+- [x] 3 Element towers each with their own body (`render/towerBodies.ts`): basalt forge with lava seams, ice prisms on snow, copper-coil spire with lightning rods, ring of standing stones with runes, twisted root trunk with mushrooms and thorns, sandstone coral fountain; taller with more features per level. Glowing parts share one material per element (still batch).
+- [x] 4 Effects: ground marks (scorch, frost, crack, poison, wet; one instanced draw call, ring buffer, life follows particle density), bigger projectiles and trails, lightning halo, deaths with debris, a rising wisp in the armor colour and dust; boss deaths with a shockwave and crack.
+- [x] 5 Ink outline on creeps (inverted hull sharing the skeleton), Medium and High only.
+- [x] 6 Tutorial in gameplay (`ui/Onboarding.ts`): choose element -> pick a tower (bar glows, arrow) -> build on a golden marker at the best spot -> Start (glows) -> controls card (keys or touch). Skippable, once per profile.
+- Rules (user): first element pick at the start again; element towers 50 gold (Gale 60), first upgrade 75.
+- Perf (CPU x4, phone viewport, 40 L3 towers): Low ~40 fps, Medium ~32 fps.
+
 ## Notes for the proposal (1b)
 A throwaway sim (not in the repo) compared, at equal tower counts, a
 "gauntlet" (towers hugging the straight path) with a comb maze on the
