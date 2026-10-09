@@ -92,7 +92,7 @@ Slices merged into main; direction B (Phaser + baked sprites) removed.
 - First two bosses (waves 5, 10) 30% weaker (`bosses.earlyHp`). Ad offers styled apart; lives refill offered from the first lost life. Reset game (with confirmation) in Settings. No interest countdown under gold. Graphics details fold away in Settings.
 - Rewarded ad for gold, once per wave: tapping a build or Upgrade without enough gold offers the price (capped at `ads.goldMax`), then builds/upgrades. Note: a tower bought this way can be sold the same wave for a full refund, so it works like a once-per-wave gold ad.
 
-- Damage numbers over every direct hit (one GPU draw call, glyph atlas; `render/damageNumbers.ts`): white, crits orange, 20% bigger, with "!". Cap on live numbers follows the particle density preset; crits always show. Crit: 10% chance, ×2 (`BALANCE.crit`, towers may override `critChance`), shown in the tower panel. Normal creeps +20% hp (`waves.normalHp`), bosses unchanged.
+- Damage numbers over every direct hit (one GPU draw call, glyph atlas; `render/damageNumbers.ts`): white, crits orange, 20% bigger, with "!". Cap on live numbers follows the particle density preset; crits always show. Crit: 5% chance (was 10%, user 2026-10-09), ×2 (`BALANCE.crit`, towers may override `critChance`), shown in the tower panel. Normal creeps +20% hp (`waves.normalHp`), bosses unchanged.
 
 ## Notes for the proposal (1b)
 A throwaway sim (not in the repo) compared, at equal tower counts, a

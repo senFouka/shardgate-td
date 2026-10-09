@@ -164,7 +164,7 @@ export const BALANCE = {
   },
 
   /** every direct hit may be a critical hit (towers can override the chance) */
-  crit: { chance: 0.1, multiplier: 2 },
+  crit: { chance: 0.05, multiplier: 2 },
 
   /** rewarded-ad gold for a build or upgrade the player cannot afford (once per wave, set by the user) */
   ads: { goldMax: 200 },
