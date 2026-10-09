@@ -399,7 +399,7 @@ export class GameHud {
     this.end.replaceChildren(
       el('div', { class: 'ui-panel hud-end' }, [
         el('h2', { text: won ? 'The Shardgate holds!' : 'The Shardgate has fallen' }),
-        el('p', { class: 'ui-note', text: won ? `All ${wave} waves defeated on ${DIFFICULTY_NAMES[this.game.difficulty]}.` : `You reached wave ${wave} of ${BALANCE.waves.count} on ${DIFFICULTY_NAMES[this.game.difficulty]}.` }),
+        el('p', { class: 'ui-note', text: won ? `All ${wave} waves defeated on ${DIFFICULTY_NAMES[this.game.difficulty]}.` : `You reached wave ${wave} on ${DIFFICULTY_NAMES[this.game.difficulty]}.` }),
         el('p', { class: 'ui-note', text: `Enemies defeated by your towers still standing: ${kills}` }),
         cont,
         again,
@@ -420,7 +420,7 @@ export class GameHud {
     const shownWave = Math.min(BALANCE.waves.count, Math.max(1, preview ? g.wave + 1 : g.wave));
     const boss = Game.isBossWave(shownWave);
     const name = this.hooks.waveName(shownWave, false) + (boss ? ` + boss ${this.hooks.waveName(shownWave, true)}` : '');
-    this.wave.textContent = `Wave ${g.wave} / ${BALANCE.waves.count}`;
+    this.wave.textContent = `Wave ${g.wave}`;
     this.waveName.textContent = preview ? `Next: ${name}` : name;
     const armor = Game.waveArmor(shownWave);
     const ak = `${armor}`;

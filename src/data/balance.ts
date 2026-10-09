@@ -187,8 +187,8 @@ export const BALANCE = {
     hpBase: 28,
     hpGrowth: 1.115,
     hpLinear: 8,
-    /** normal creeps only (not bosses or element guardians): +20% hit points, set by the user */
-    normalHp: 1.2,
+    /** normal creeps only (not bosses or element guardians): +20% then +15% more hit points (1.2 x 1.15), set by the user */
+    normalHp: 1.38,
     /** seconds a creep needs to walk the whole route (speed = route length / this) */
     routeSeconds: 60,
     /** gold per kill on wave w: bountyBase + floor((w-1) / bountyStep) */
