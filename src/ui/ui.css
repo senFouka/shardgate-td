@@ -250,3 +250,18 @@ html, body { margin: 0; height: 100%; background: #0b0a08; overflow: hidden; tou
 .ui-confirm h3 { color: #ffd2c8; }
 .ui-confirm-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
 .ui-confirm-actions .ui-btn { min-width: 120px; min-height: 52px; }
+
+/* --------------------------------------------- folding settings section */
+.ui-fold { display: block; }
+.ui-fold-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 0 14px;
+  list-style: none; cursor: pointer; border: 1px solid var(--ui-edge); border-radius: 12px; background: rgba(0,0,0,.18);
+}
+.ui-fold-head::-webkit-details-marker { display: none; }
+.ui-fold-head:hover { border-color: var(--ui-edge-hi); }
+.ui-fold-head:focus-visible { outline: 2px solid var(--ui-accent); outline-offset: 2px; }
+.ui-fold-hint { font-size: 13px; color: var(--ui-accent); }
+.ui-fold-hint::after { content: ' ▾'; }
+.ui-fold[open] .ui-fold-hint { font-size: 0; }
+.ui-fold[open] .ui-fold-hint::after { content: 'Hide ▴'; font-size: 13px; }
+.ui-fold-body { display: grid; gap: 10px; padding-top: 12px; }

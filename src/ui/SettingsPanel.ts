@@ -108,7 +108,11 @@ export class SettingsPanel {
         preset.node,
         el('div', { class: 'ui-head' }, [this.autoNote, this.autoBtn]),
       ]),
-      el('section', { class: 'ui-section' }, [el('h3', { text: 'Details' }), ...rows]),
+      // the per-detail graphics options fold away, so the menu stays short
+      el('details', { class: 'ui-section ui-fold' }, [
+        el('summary', { class: 'ui-fold-head' }, [el('h3', { text: 'Graphics details' }), el('span', { class: 'ui-fold-hint', text: 'Show' })]),
+        el('div', { class: 'ui-fold-body' }, rows),
+      ]),
     ]);
     this.modal = el('div', { class: 'ui-modal', hidden: '' }, [panel]);
     this.modal.addEventListener('pointerdown', (e) => {
