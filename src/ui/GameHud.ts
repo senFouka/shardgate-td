@@ -6,7 +6,7 @@ import { DIFFICULTY_NAMES, DIFFICULTY_ORDER, type DifficultyId } from '../data/d
 
 /**
  * The in-game HUD (HTML over the canvas):
- * - top bar: lives, gold, wave (with its armor element), interest and the next-wave button
+ * - top bar: lives, gold, wave (with its armor element) and the next-wave button
  * - element pick: the three elements on offer, or a random pick for gold
  * - bottom build bar: Bolt, Mortar and one button per owned element
  * - tower panel: stats, Upgrade, Convert (basic towers) and Sell
@@ -72,7 +72,6 @@ export class GameHud {
   private readonly wave = el('span', { class: 'hud-num' });
   private readonly waveName = el('span', { class: 'hud-sub' });
   private readonly armor = el('span', { class: 'hud-armor' });
-  private readonly interest = el('span', { class: 'hud-sub' });
   private readonly waveBtn = el('button', { class: 'ui-btn hud-wave-btn', type: 'button' });
   private readonly refillBtn = el('button', { class: 'ui-btn hud-ad-btn hud-refill', type: 'button', hidden: '', title: 'Watch an ad to refill your lives (once per game)' });
   /** false when the platform has ads switched off: every ad offer is hidden */
@@ -94,7 +93,7 @@ export class GameHud {
       el('div', { class: 'hud-chip' }, [el('span', { class: 'hud-icon', html: icon }), el('div', { class: 'hud-stack' }, [value, ...extra])]);
     const top = el('div', { class: 'hud-top' }, [
       chip('<svg viewBox="0 0 24 24"><path fill="#e2475b" d="M12 21s-7.5-4.6-9.4-9.4C1.2 8 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.8 3.5 4.4 7.1C19.5 16.4 12 21 12 21z"/></svg>', this.lives),
-      chip('<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="#f2c14b" stroke="#a8761c" stroke-width="1.5"/><path d="M9 12h6M12 9v6" stroke="#a8761c" stroke-width="1.6"/></svg>', this.gold, this.interest),
+      chip('<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="#f2c14b" stroke="#a8761c" stroke-width="1.5"/><path d="M9 12h6M12 9v6" stroke="#a8761c" stroke-width="1.6"/></svg>', this.gold),
       chip('<svg viewBox="0 0 24 24" fill="none" stroke="#9fc8ff" stroke-width="1.8"><path d="M3 12c3-4 6-4 9 0s6 4 9 0"/><path d="M3 17c3-4 6-4 9 0s6 4 9 0" opacity=".5"/></svg>', el('div', { class: 'hud-wave-line' }, [this.wave, this.diffTag]), this.waveName, this.armor),
       this.refillBtn,
       this.waveBtn,
@@ -373,9 +372,6 @@ export class GameHud {
         this.armor.innerHTML = `<i style="--el:${ELEMENTS[armor].color}"></i>${ELEMENTS[armor].name} armor · weak to <b style="color:${ELEMENTS[weak].color}">${ELEMENTS[weak].name}</b>`;
       } else this.armor.textContent = 'No armor';
     }
-    const period = BALANCE.economy.interestPeriod;
-    const next = Math.floor(g.gold * BALANCE.economy.interestRate);
-    this.interest.textContent = g.phase === 'playing' ? `+${next} in ${Math.ceil(period - (g.time % period))}s` : `interest ${Math.round(BALANCE.economy.interestRate * 100)}% / ${period}s`;
     // difficulty is chosen before the first wave, then locked for the game
     this.diffRow.hidden = g.phase !== 'ready';
     if (g.phase === 'ready') {
