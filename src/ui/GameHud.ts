@@ -282,13 +282,14 @@ export class GameHud {
     const dmg = (x: TowerStats) => String(Math.round(x.damage * bonus));
     this.panel.querySelector('.hud-level')!.textContent = `Lv ${t.level}/${MAX_TOWER_LEVEL}`;
     this.panel.querySelector('.hud-stats')!.replaceChildren(
-      stat('Damage', dmg(s) + (s.splash && !isElement(t.kind) ? ' (area)' : ''), next ? dmg(next) : undefined),
+      stat('Damage', dmg(s), next ? dmg(next) : undefined),
       stat('DPS', (Game.dps(t.kind, t.level) * bonus).toFixed(1), next ? (Game.dps(t.kind, t.level + 1) * bonus).toFixed(1) : undefined),
       stat('Range', String(s.range), next ? String(next.range) : undefined),
       stat('Kills', String(t.kills)),
     );
     // what the tower does besides damage, and how it fares against this wave
     const lines: string[] = [];
+    if (s.splash && !isElement(t.kind)) lines.push('Hits every enemy near where the shell lands.');
     if (s.groundOnly) lines.push('Ground only: cannot hit flying enemies.');
     if (s.burnDps) lines.push(`Burns for ${Math.round(s.burnDps * bonus)}/s over ${s.burnTime}s.`);
     if (s.slow !== undefined) lines.push(`Slows to ${Math.round(s.slow * 100)}% speed for ${s.slowTime}s; shards splash nearby enemies.`);
@@ -328,10 +329,10 @@ export class GameHud {
       up.disabled = true;
     } else if (g.gold < cost && this.canOfferGold()) {
       // short of gold: the button pays for the upgrade with an ad
-      up.innerHTML = `${AD_ICON}<span>Upgrade ${cost} · ${Game.upgradeTime(t.level)}s</span>`;
+      up.innerHTML = `<span class="hud-up-l1">${AD_ICON}Upgrade</span><span class="hud-up-l2">${cost} gold · ${Game.upgradeTime(t.level)}s</span>`;
       up.disabled = false;
     } else {
-      up.textContent = `Upgrade ● ${cost} · ${Game.upgradeTime(t.level)}s`;
+      up.innerHTML = `<span class="hud-up-l1">Upgrade</span><span class="hud-up-l2">● ${cost} gold · ${Game.upgradeTime(t.level)}s</span>`;
       up.disabled = g.gold < cost;
     }
     up.classList.toggle('ad', !t.work && cost !== null && g.gold < cost && this.canOfferGold());

@@ -292,5 +292,17 @@ html, body { margin: 0; height: 100%; background: #0b0a08; overflow: hidden; tou
 .hud-tower.ad .hud-tower-cost::before { content: none; }
 .hud-tower.ad .hud-cost-ad { display: inline-block; }
 .hud-tower.ad { border-color: #f2c14b; box-shadow: 0 0 0 2px rgba(242,193,75,.3), var(--ui-shadow); }
-.hud-upgrade.ad { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: linear-gradient(#4b3a12, #2c220c); color: #ffe7a8; border-color: #f2c14b; }
-.hud-upgrade.ad .hud-ad-icon { width: 20px; height: 20px; }
+.hud-upgrade { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 4px 6px; }
+.hud-upgrade.ad { background: linear-gradient(#4b3a12, #2c220c); color: #ffe7a8; border-color: #f2c14b; }
+.hud-upgrade.ad .hud-ad-icon { width: 18px; height: 18px; }
+.hud-up-l1 { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
+.hud-up-l2 { font-size: 12px; opacity: .85; }
+/* stats: label and value never run into each other */
+.hud-stat { gap: 6px; }
+.hud-stat b { white-space: nowrap; }
+/* phones: the tower panel stays narrow, and the build bar steps aside while a tower is selected */
+@media (max-width: 760px), (max-height: 480px) {
+  .hud-panel { width: 252px; padding: 10px 12px; gap: 8px; }
+  .hud-stats { font-size: 12px; gap: 3px 10px; }
+  #ui:has(.hud-panel:not([hidden])) .hud-build { display: none; }
+}
