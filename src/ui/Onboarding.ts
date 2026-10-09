@@ -165,10 +165,36 @@ export class Onboarding {
     this.arrow.hidden = !this.glowing;
   }
 
+  /**
+   * Keeps the card clear of every button: just above the tower bar, or above
+   * the element panel when that sits in the middle at the bottom (phones).
+   */
+  private placeCard(): void {
+    if (this.card.hidden || this.step === 'controls') {
+      this.card.style.top = '';
+      this.card.style.bottom = '';
+      return;
+    }
+    let anchor = window.innerHeight;
+    const bar = document.querySelector('.hud-build') as HTMLElement | null;
+    const br = bar?.getBoundingClientRect();
+    if (br && br.height > 0) anchor = Math.min(anchor, br.top);
+    const pick = document.querySelector('.hud-pick') as HTMLElement | null;
+    if (pick && !pick.hidden) {
+      const r = pick.getBoundingClientRect();
+      if (Math.abs(r.left + r.width / 2 - window.innerWidth / 2) < 120) anchor = Math.min(anchor, r.top);
+    }
+    this.card.style.top = 'auto';
+    this.card.style.bottom = `${Math.round(window.innerHeight - anchor + 10)}px`;
+  }
+
   /** Called every frame (real time). */
   update(dt: number): void {
     if (this.step === 'over') return;
     this.time += dt;
+    this.placeCard();
+    // the element panel glows on its own; an arrow there would cover the card
+    if (this.step === 'element') this.arrow.hidden = true;
     // the marker breathes and its arrow bounces
     if (this.marker.visible) {
       const tip = this.marker.getObjectByName('tip')!;
@@ -190,7 +216,7 @@ export class Onboarding {
       this.arrow.classList.toggle('up', below);
       this.arrow.style.left = `${r.left + r.width / 2}px`;
       this.arrow.style.top = below ? `${r.bottom + 6 + bounce}px` : `${r.top - 42 - bounce}px`;
-      this.arrow.style.visibility = (this.glowing as HTMLElement).offsetParent ? 'visible' : 'hidden';
+      this.arrow.style.visibility = r.height > 0 ? 'visible' : 'hidden';
     }
     if (this.step === 'controls' && (this.controlsTimer -= dt) <= 0) this.finish();
     if (this.game.phase === 'won' || this.game.phase === 'lost') this.finish();
