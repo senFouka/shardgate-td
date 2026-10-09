@@ -172,7 +172,7 @@ async function boot(): Promise<void> {
         return true;
       }),
     onSpeed: () => {
-      const next = profile.speed === 1 ? 2 : profile.speed === 2 ? 3 : 1;
+      const next = profile.speed === 1 ? 1.5 : 1;
       profile.setSpeed(next);
       hud.setSpeed(next);
     },

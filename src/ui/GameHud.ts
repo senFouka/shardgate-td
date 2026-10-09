@@ -66,7 +66,7 @@ export interface HudHooks {
   onAdUpgrade(tower: Tower): void;
   /** gold for one tower of this kind, then build mode for it */
   onAdBuild(kind: TowerId): void;
-  /** next game speed (1x -> 2x -> 3x -> 1x) */
+  /** next game speed (1x <-> 1.5x) */
   onSpeed(): void;
   onRestart(): void;
 }
@@ -79,7 +79,7 @@ export class GameHud {
   private readonly waveName = el('span', { class: 'hud-sub' });
   private readonly armor = el('span', { class: 'hud-armor' });
   private readonly waveBtn = el('button', { class: 'ui-btn hud-wave-btn', type: 'button' });
-  /** game speed 1x / 2x / 3x (free, never behind an ad) */
+  /** game speed 1x / 1.5x (free, never behind an ad) */
   private readonly speedBtn = el('button', { class: 'ui-btn hud-speed', type: 'button', title: 'Game speed (F)' });
   private readonly refillBtn = el('button', { class: 'ui-btn hud-ad-btn hud-refill', type: 'button', hidden: '', title: 'Watch an ad to refill your lives (once per game)' });
   /** false when the platform has ads switched off: every ad offer is hidden */

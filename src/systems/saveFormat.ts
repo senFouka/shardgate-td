@@ -12,7 +12,7 @@ import { isDifficulty, type DifficultyId } from '../data/difficulty.ts';
 import { defaultGraphics, normalizeGraphics, type GraphicsSettings } from '../data/graphics.ts';
 
 /** Game speed the player can pick; always free (CLAUDE.md "Player agency"). */
-export type GameSpeed = 1 | 2 | 3;
+export type GameSpeed = 1 | 1.5;
 
 export const RUN_VERSION = 1;
 export const PROFILE_VERSION = 1;
@@ -105,7 +105,8 @@ function unit(v: unknown, fallback: number): number {
 }
 
 function normalizeSpeed(speed: unknown): GameSpeed {
-  return speed === 2 || speed === 3 ? speed : 1;
+  // 1.5x is the only faster speed (user, 2026-10-09); old 2x/3x saves become 1.5x
+  return speed === 1.5 || speed === 2 || speed === 3 ? 1.5 : 1;
 }
 
 /** Fills any missing field with its default, so old or partial saves still load. */

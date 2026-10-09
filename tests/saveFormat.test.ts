@@ -95,10 +95,11 @@ test('lifetime counter: missing or negative becomes 0, fractions are floored', (
   assert.equal(normalizeProfile({ lifetimeWavesCleared: 12.7 }).lifetimeWavesCleared, 12);
 });
 
-test('game speed setting: defaults to 1x, keeps 2x and 3x, rejects anything else', () => {
+test('game speed setting: defaults to 1x, keeps 1.5x, old 2x/3x become 1.5x, rejects anything else', () => {
   assert.equal(normalizeProfile({}).settings.speed, 1);
-  assert.equal(normalizeProfile({ settings: { muted: true, speed: 2 } }).settings.speed, 2);
-  assert.equal(normalizeProfile({ settings: { muted: true, speed: 3 } }).settings.speed, 3);
+  assert.equal(normalizeProfile({ settings: { muted: true, speed: 1.5 } }).settings.speed, 1.5);
+  assert.equal(normalizeProfile({ settings: { muted: true, speed: 2 } } as never).settings.speed, 1.5);
+  assert.equal(normalizeProfile({ settings: { muted: true, speed: 3 } } as never).settings.speed, 1.5);
   assert.equal(normalizeProfile({ settings: { muted: false, speed: 7 } } as never).settings.speed, 1);
 });
 

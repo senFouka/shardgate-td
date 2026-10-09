@@ -111,7 +111,7 @@ Element pick: on waves 5, 10, 15 … choose 1 of 3 offered elements, or take a *
 
 ## Player agency and pacing
 - Building, upgrading and selling are allowed at any time. Wave pacing (set by the user): a creep needs about **60 s** to walk the whole route; a wave gets at most **80 s**; once it is cleared (or its 80 s are up) a **10 s rest** counts down to the next wave. A **Start now** button starts the next wave at once (small gold bonus), any time after the current wave has finished spawning. Creeps of a wave walk close together so splash towers hit several.
-- Free **1× / 2× / 3× speed** toggle, never ad-gated. Everything runs on game time; no gameplay timer uses real time.
+- Free **1× / 1.5× speed** toggle (user, 2026-10-09: only these two), never ad-gated. Everything runs on game time; no gameplay timer uses real time.
 - Tower info panel: DPS, targeting mode (first / last / strongest / closest), kill count.
 - First-time hints, no blocking tutorial: the first 30 seconds teach placement and path preview.
 
