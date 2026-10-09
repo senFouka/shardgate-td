@@ -130,6 +130,8 @@ export type GameEvent =
   | { type: 'fire'; shot: Shot }
   | { type: 'hit'; shot: Shot; col: number; row: number }
   | { type: 'death'; creep: Creep; tower: Tower | null }
+  /** a direct hit landed (for damage numbers): the damage done, and whether it was a critical hit */
+  | { type: 'damage'; creep: Creep; amount: number; crit: boolean }
   | { type: 'leak'; creep: Creep }
   | { type: 'gold'; gold: number; delta: number; reason: GoldReason }
   | { type: 'lives'; lives: number }
@@ -662,7 +664,7 @@ export class Game {
   private spawn(boss: boolean): void {
     const b = BALANCE.bosses;
     const early = boss ? (b.earlyHp[Math.floor(this.wave / b.every) - 1] ?? 1) : 1;
-    const hp = Math.round(creepHp(this.wave) * (boss ? b.hpFactor * early * this.hpScale(this.diff.bossHp) : this.hpScale(this.diff.hp)));
+    const hp = Math.round(creepHp(this.wave) * (boss ? b.hpFactor * early * this.hpScale(this.diff.bossHp) : BALANCE.waves.normalHp * this.hpScale(this.diff.hp)));
     const c = this.newCreep(waveLook(this.wave, boss), hp, this.creepSpeed * (boss ? b.speedFactor : 1), Game.waveArmor(this.wave));
     c.boss = boss;
     c.bounty = Math.max(1, Math.round((boss ? b.bountyBase + this.wave : creepBounty(this.wave)) * this.diff.bounty));
@@ -861,7 +863,8 @@ export class Game {
   /** A direct hit: damage, then the tower's element effect. Bosses shrug off half of stuns and knockback. */
   private strike(c: Creep, amount: number, tower: Tower, s: TowerStats): void {
     if (!c.alive) return;
-    this.damage(c, amount, tower, true);
+    const crit = this.random() < (s.critChance ?? BALANCE.crit.chance);
+    this.damage(c, crit ? amount * BALANCE.crit.multiplier : amount, tower, true, crit);
     if (!c.alive) return;
     const bossScale = c.boss ? 0.5 : 1;
     const bonus = this.levelBonus(tower.kind);
@@ -898,13 +901,16 @@ export class Game {
    * Hurts a creep. Direct hits get the element counter, the element level
    * bonus and the flash; damage over time already carries the level bonus.
    */
-  private damage(c: Creep, base: number, tower: Tower | null, direct: boolean): void {
+  private damage(c: Creep, base: number, tower: Tower | null, direct: boolean, crit = false): void {
     if (!c.alive) return;
     let amount = base * (1 + Game.shredOf(c));
     if (tower) amount *= elementMultiplier(isElement(tower.kind) ? tower.kind : null, c.armor) * (direct ? this.levelBonus(tower.kind) : 1);
     const dealt = Math.min(c.hp, amount);
     c.hp -= amount;
-    if (direct) c.hitAge = 0;
+    if (direct) {
+      c.hitAge = 0;
+      this.emit({ type: 'damage', creep: c, amount, crit });
+    }
     if (tower) tower.damageDealt += dealt;
     if (c.hp <= 0) {
       c.alive = false;

@@ -286,6 +286,7 @@ export class GameHud {
       stat('DPS', (Game.dps(t.kind, t.level) * bonus).toFixed(1), next ? (Game.dps(t.kind, t.level + 1) * bonus).toFixed(1) : undefined),
       stat('Range', String(s.range), next ? String(next.range) : undefined),
       stat('Kills', String(t.kills)),
+      stat('Crit', `${Math.round((s.critChance ?? BALANCE.crit.chance) * 100)}% ×${BALANCE.crit.multiplier}`),
     );
     // what the tower does besides damage, and how it fares against this wave
     const lines: string[] = [];

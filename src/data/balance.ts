@@ -28,6 +28,8 @@ export interface TowerStats {
   range: number;
   /** cells per second */
   projectileSpeed: number;
+  /** chance (0..1) that a hit is a critical hit; defaults to BALANCE.crit.chance */
+  critChance?: number;
   /** splash radius in cells (0 = single target) */
   splash: number;
   /** cannot target or hurt flying creeps (Mortar) */
@@ -161,6 +163,9 @@ export const BALANCE = {
     bossLeakCost: 3,
   },
 
+  /** every direct hit may be a critical hit (towers can override the chance) */
+  crit: { chance: 0.1, multiplier: 2 },
+
   /** rewarded-ad gold for a build or upgrade the player cannot afford (once per wave, set by the user) */
   ads: { goldMax: 200 },
 
@@ -182,6 +187,8 @@ export const BALANCE = {
     hpBase: 28,
     hpGrowth: 1.115,
     hpLinear: 8,
+    /** normal creeps only (not bosses or element guardians): +20% hit points, set by the user */
+    normalHp: 1.2,
     /** seconds a creep needs to walk the whole route (speed = route length / this) */
     routeSeconds: 60,
     /** gold per kill on wave w: bountyBase + floor((w-1) / bountyStep) */

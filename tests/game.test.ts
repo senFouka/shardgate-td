@@ -149,7 +149,7 @@ test('a boss walks at the end of every 5th wave, tougher and slower', () => {
   assert.equal(bosses.length, 1);
   assert.equal(bosses[0].wave, BALANCE.bosses.every);
   const normal = seen.find((s) => s.wave === BALANCE.bosses.every && !s.boss)!;
-  const want = normal.hp * BALANCE.bosses.hpFactor * (BALANCE.bosses.earlyHp[0] ?? 1);
+  const want = (normal.hp / BALANCE.waves.normalHp) * BALANCE.bosses.hpFactor * (BALANCE.bosses.earlyHp[0] ?? 1);
   assert.ok(Math.abs(bosses[0].hp - want) <= want * 0.05 && bosses[0].speed < normal.speed, `boss ${bosses[0].hp} vs ${want}`);
   assert.equal(seen.filter((s) => s.wave === BALANCE.bosses.every).at(-1)!.boss, true, 'the boss comes last');
 });
@@ -271,9 +271,43 @@ test('the first two bosses are 30% weaker, the later ones are not', () => {
     });
     g.callWave();
     run(g, 10);
-    return boss / normal / BALANCE.bosses.hpFactor;
+    return (boss / normal / BALANCE.bosses.hpFactor) * BALANCE.waves.normalHp;
   };
   assert.ok(Math.abs(ratio(5) - 0.7) < 0.03, `wave 5: ${ratio(5)}`);
   assert.ok(Math.abs(ratio(10) - 0.7) < 0.03, `wave 10: ${ratio(10)}`);
   assert.ok(Math.abs(ratio(15) - 1) < 0.03, `wave 15: ${ratio(15)}`);
+});
+
+test('normal creeps get the +20% hit points, bosses do not', () => {
+  const g = new Game(8);
+  let first = 0;
+  g.on((e) => {
+    if (e.type === 'spawn' && !first) first = e.creep.maxHp;
+  });
+  g.callWave();
+  g.advance(0.1);
+  assert.ok(Math.abs(first - creepHp(1) * BALANCE.waves.normalHp * (1 + (BALANCE.difficulty.medium.hp - 1) * BALANCE.difficultyRamp.rampStart)) <= 1);
+});
+
+test('critical hits: about the set share of hits, for the set multiplier, each reported', () => {
+  const g = new Game(12);
+  g.gold = 5000;
+  g.lives = 1000;
+  for (const [c, r] of grassCells().filter(([, r]) => r === 4 || r === 5).slice(0, 8)) g.build('bolt', c, r);
+  settle(g);
+  const hits: Array<{ amount: number; crit: boolean }> = [];
+  g.on((e) => {
+    if (e.type === 'damage') hits.push({ amount: e.amount, crit: e.crit });
+  });
+  g.wave = 9;
+  g.callWave();
+  run(g, 60);
+  const crits = hits.filter((h) => h.crit);
+  const normal = hits.filter((h) => !h.crit);
+  assert.ok(hits.length > 100, `hits ${hits.length}`);
+  const share = crits.length / hits.length;
+  assert.ok(Math.abs(share - BALANCE.crit.chance) < 0.06, `crit share ${share.toFixed(3)}`);
+  // bolts of the same level on unarmored creeps: a crit is exactly the multiplier
+  const base = Math.min(...normal.map((h) => h.amount));
+  assert.ok(crits.some((h) => Math.abs(h.amount - base * BALANCE.crit.multiplier) < 0.01));
 });

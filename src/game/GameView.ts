@@ -4,6 +4,7 @@ import { cellX, cellZ } from '../render/coords';
 import { Particles, rand, randDir } from '../render/particles';
 import { createTower, rangeRing, type TowerView } from '../render/towers';
 import { createCreepView, type CreepView } from '../render/creeps';
+import { DamageNumbers } from '../render/damageNumbers';
 import type { CreepRoster } from '../render/creepModels';
 import { sfx } from '../systems/Sfx';
 import type { Creep, Game, Shot, Tower, TowerId } from './Game';
@@ -45,6 +46,8 @@ export class GameView {
   private readonly waves: Array<{ mesh: THREE.Mesh; t: number; splash: number; life: number }> = [];
   private readonly ringTex = makeRingTexture();
   readonly root = new THREE.Group();
+  /** floating damage numbers over hit creeps */
+  private readonly numbers: DamageNumbers;
   /** progress bars over towers that are being built, upgraded or converted */
   private readonly bars = new Map<number, { root: THREE.Group; fill: THREE.Mesh; top: number }>();
   private shake = 0;
@@ -57,7 +60,8 @@ export class GameView {
   ) {
     this.fxAdd = new Particles(5000, true);
     this.fxSmoke = new Particles(1500, false, 1.2);
-    this.root.add(this.fxAdd.points, this.fxSmoke.points, this.range);
+    this.numbers = new DamageNumbers(particleScale);
+    this.root.add(this.fxAdd.points, this.fxSmoke.points, this.range, this.numbers.mesh);
     game.on((e) => {
       // sounds for what happens on the battlefield
       // tower shots and hits are silent (the user's choice)
@@ -85,6 +89,11 @@ export class GameView {
       }
       else if (e.type === 'hit') this.impact(e.shot, e.col, e.row);
       else if (e.type === 'death') this.death(e.creep);
+      else if (e.type === 'damage') {
+        const c = e.creep;
+        const top = (c.boss ? 2.7 : 1.2) + (c.flying ? 0.55 : 0);
+        this.numbers.add(cellX(c.col), top, cellZ(c.row), e.amount, e.crit);
+      }
       else if (e.type === 'leak') this.leak(e.creep);
     });
   }
@@ -114,6 +123,7 @@ export class GameView {
     }
     for (const k of this.corpses) this.root.remove(k.view.root);
     for (const s of this.shells.values()) this.root.remove(s);
+    this.numbers.clear();
     for (const b of this.bars.values()) this.root.remove(b.root);
     this.bars.clear();
     this.towers.clear();
@@ -626,6 +636,7 @@ export class GameView {
     }
     this.fxAdd.update(dt);
     this.fxSmoke.update(dt);
+    this.numbers.update(dt);
     this.shake = Math.max(0, this.shake - dt * 0.3);
   }
 }
