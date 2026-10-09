@@ -32,7 +32,8 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
  * camera, UI, then the game loop.
  */
 const PITCH_DEG = 56;
-const SKY = 0x2a3a2a;
+/** the haze at the horizon (fog and the sky behind the hills) */
+const SKY = 0x9cb8c4;
 /** Display name of a tower kind, for messages. */
 const TOWER_NAMES = (kind: string): string => (kind in ELEMENTS ? ELEMENTS[kind as keyof typeof ELEMENTS].tower : kind[0].toUpperCase() + kind.slice(1));
 
@@ -67,6 +68,27 @@ function blockPageDefaults(): void {
   document.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
+/** A soft sky: deep blue up high, a warm pale haze at the horizon. */
+function skyTexture(): THREE.CanvasTexture {
+  const c = document.createElement('canvas');
+  c.width = 4;
+  c.height = 256;
+  const g = c.getContext('2d')!;
+  const grd = g.createLinearGradient(0, 0, 0, 256);
+  grd.addColorStop(0, '#4f86c0');
+  grd.addColorStop(0.55, '#a9c6d6');
+  grd.addColorStop(0.8, '#e6d8b8');
+  grd.addColorStop(1, '#c9c2a4');
+  g.fillStyle = grd;
+  g.fillRect(0, 0, 4, 256);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+/** Where the sun stands relative to the point the camera looks at. */
+const SUN_OFFSET = new THREE.Vector3(-12, 30, -12);
+
 async function boot(): Promise<void> {
   blockPageDefaults();
   await platform.init();
@@ -78,7 +100,7 @@ async function boot(): Promise<void> {
   music.init();
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(SKY);
+  scene.background = skyTexture();
   scene.fog = new THREE.Fog(SKY, 40, 90);
   const camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 400);
   const renderer = new GameRenderer(document.getElementById('game')!, scene, camera);
@@ -90,8 +112,9 @@ async function boot(): Promise<void> {
   const rig = new CameraRig(camera, canvas, { width: MAP.cols, depth: MAP.rows, pitchDeg: PITCH_DEG, minCellsAcross: 14 });
 
   // light: the sun's shadow box follows the view so shadows stay sharp at any zoom
-  scene.add(new THREE.HemisphereLight(0xd8e8ff, 0x46351f, 1.15));
-  const sun = new THREE.DirectionalLight(0xffe2b8, 2.7);
+  // late-afternoon light: a warm sun, cool sky fill, warm bounce from the ground
+  scene.add(new THREE.HemisphereLight(0xcfe2ff, 0x5a4428, 1.05));
+  const sun = new THREE.DirectionalLight(0xffd9a6, 2.9);
   sun.shadow.bias = -0.0006;
   sun.shadow.normalBias = 0.03;
   scene.add(sun, sun.target);
@@ -105,7 +128,7 @@ async function boot(): Promise<void> {
     sc.far = 60 + half * 2;
     sc.updateProjectionMatrix();
     sun.target.position.copy(target);
-    sun.position.set(target.x - 12, 30, target.z - 12);
+    sun.position.copy(target).add(SUN_OFFSET);
     const fog = scene.fog as THREE.Fog;
     fog.near = distance * 1.15;
     fog.far = distance * 2.6;
@@ -113,7 +136,7 @@ async function boot(): Promise<void> {
 
   const mapView = new MapView();
   const creepModels = new CreepRoster();
-  await Promise.all([mapView.build(renderer.renderer.capabilities.getMaxAnisotropy()), creepModels.init()]);
+  await Promise.all([mapView.build(renderer.renderer.capabilities.getMaxAnisotropy(), SUN_OFFSET.clone().normalize()), creepModels.init()]);
   scene.add(mapView.group);
 
   const graphics = new GraphicsController(renderer, profile);
@@ -129,7 +152,10 @@ async function boot(): Promise<void> {
 
   const hud = new GameHud({
     waveName: (wave, boss) => creepModels.nameFor(wave, boss),
-    onPickTower: (kind) => input.pick(kind),
+    onPickTower: (kind) => {
+      input.pick(kind);
+      mapView.setGridVisible(!!kind);
+    },
     onSell: (t) => {
       game.sell(t);
       input.select(null);
@@ -284,6 +310,13 @@ async function boot(): Promise<void> {
     });
     view.prefetchOffer();
     view.showExisting();
+    // the grass decor follows the towers: cleared under them, back when they are sold
+    mapView.restoreAll();
+    for (const t of game.towers) mapView.clearCell(t.col, t.row);
+    game.on((e) => {
+      if (e.type === 'build') mapView.clearCell(e.tower.col, e.tower.row);
+      else if (e.type === 'sell') mapView.restoreCell(e.tower.col, e.tower.row);
+    });
     platform.gameplayStart();
   }
   hud.bind(game);
@@ -304,6 +337,7 @@ async function boot(): Promise<void> {
   renderer.onResize(() => {
     rig.fit();
     mapView.route.setScale(renderer.bufferHeight(), camera.fov);
+    mapView.ambience.setScale(renderer.bufferHeight(), camera.fov);
     view.setScale(renderer.bufferHeight(), camera.fov);
   });
   renderer.resize();
@@ -355,6 +389,7 @@ async function boot(): Promise<void> {
     rig.update(dt);
     followSun();
     mapView.route.points.visible = game.phase === 'ready';
+    mapView.ambience.setDensity(renderer.particleScale);
     mapView.update(time, gdt);
     view.update(sdt, camera);
     const s = view.shakeAmount;

@@ -60,3 +60,8 @@ Tower shots, hits and shell blasts have no sound (user's choice).
 |---|---|---|---|
 | Title lettering on the covers and the first video frame | "Cinzel Decorative" Black by Natanael Gama, Google Fonts (https://fonts.google.com/specimen/Cinzel+Decorative) | SIL Open Font License 1.1 (OFL.txt read 2026-10-09) | used only to draw the title into the images; the font file is not distributed |
 | Everything else in the covers and videos | rendered from the game itself | ours | |
+
+## Environment pass (2026-10-09): more of the Kenney Nature Kit
+45 more models from the same pack, **Kenney Nature Kit 2.1**, https://kenney.nl/assets/nature-kit, licence **CC0 1.0** (`License.txt` in the zip, read 2026-10-09: "free to use in personal, educational and commercial projects"). Copied to `public/models/kenney-nature/`, recoloured in code to our palette, merged into a few meshes at load:
+flowers (purple/red/yellow A-B), grass, grass_leafs, plant_flatShort, plant_bushSmall, mushrooms (red, redGroup, tanGroup, tanTall), small stones (A, C, FlatA, FlatB), trees (pineRoundB/D, fat, default_fall, oak_fall, plateau, detailed_dark), log, log_large, stump_old, stump_roundDetailed, rocks (largeD/E, tallB/E), stones (tallA/C/F, largeA/C), lily_large, lily_small, statue_column, statue_columnDamaged, statue_obelisk, statue_block, statue_ring.
+The lake, cliffs, cobblestone road, sky, cloud shadows, pollen and fireflies are drawn in code (ours).

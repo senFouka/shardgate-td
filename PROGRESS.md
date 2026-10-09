@@ -107,6 +107,13 @@ Slices merged into main; direction B (Phaser + baked sprites) removed.
 - [x] Damage numbers: hits close together in place and time merge into one growing number (readable crowds). Game speed 1x / 1.5x only. Music never plays while the page is hidden or unfocused.
 - Open: sitelock (optional), the creep death sound pick, the ad-gold refund question.
 
+## Visual overhaul, stage 1: environment (user: "make it amazing", 2026-10-09)
+- [x] The battlefield is a plateau: a cliff of crags drops into a lake (own water shader: depth from the terrain, shallow turquoise to deep blue, ripples, glints, shore foam), shores rise into wooded hills (pines, broadleaf, autumn trees, bushes, logs, mushrooms, boulders) with ruins (columns, obelisks) around the gate plaza.
+- [x] Road: cut stone setts in staggered rows with bevels and a bump map, moss and grime, grass spilling over uneven kerb stones. Grass: rich painted ground, clumps of tufts, flowers, pebbles and mushrooms in meadow patches (cleared under towers, back when sold). Build grid only while placing.
+- [x] Atmosphere: sky gradient, warmer sun and bounce light, golden-hour grade, drifting cloud shadows, pollen and fireflies (count follows particle density).
+- [x] Cost kept low: static scenery merged with vertex colours into a few meshes, static matrices frozen, trees cast no shadows. A/B in one page (CPU x4, phone): the new environment costs ~0-3 fps. Build 17 MB, load to playable 2.7-3.7 s.
+- Next stages: 2 gates as the hero of the scene, 3 distinct tower silhouettes per element, 4 bigger effects, 5 one coherent style (outline), 6 visual onboarding.
+
 ## Notes for the proposal (1b)
 A throwaway sim (not in the repo) compared, at equal tower counts, a
 "gauntlet" (towers hugging the straight path) with a comb maze on the

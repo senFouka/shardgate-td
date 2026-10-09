@@ -24,9 +24,11 @@ const GRADE_SHADER = {
   fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv;
     void main(){ vec4 c = texture2D(tDiffuse, vUv);
       float l = dot(c.rgb, vec3(0.299,0.587,0.114));
-      c.rgb = mix(vec3(l), c.rgb, 1.12);
-      vec2 d = vUv - 0.5; float v = smoothstep(0.85, 0.25, length(d * vec2(1.0, 0.8)));
-      c.rgb *= mix(0.55, 1.0, v);
+      c.rgb = mix(vec3(l), c.rgb, 1.14);
+      // warm highlights, cool shadows: a golden-hour look
+      c.rgb += vec3(0.035, 0.015, -0.025) * smoothstep(0.35, 0.9, l) + vec3(-0.012, 0.0, 0.025) * (1.0 - smoothstep(0.0, 0.35, l));
+      vec2 d = vUv - 0.5; float v = smoothstep(0.9, 0.3, length(d * vec2(1.0, 0.8)));
+      c.rgb *= mix(0.62, 1.0, v);
       gl_FragColor = c; }`,
 };
 
