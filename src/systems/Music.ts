@@ -16,6 +16,7 @@ class Music {
   private unlocked = false;
   /** the page is hidden or another window has focus: no music */
   private away = false;
+  private goAway: () => void = () => undefined;
 
   init(): void {
     const probe = document.createElement('audio');
@@ -41,6 +42,7 @@ class Music {
     // looking away stops the music at once (the frame loop may not run while hidden);
     // coming back fades it in again
     const away = () => {
+      if (this.away) return;
       this.away = true;
       for (const [track, el] of this.els) {
         el.pause();
@@ -50,6 +52,7 @@ class Music {
     const back = () => {
       if (document.visibilityState === 'visible') this.away = false;
     };
+    this.goAway = away;
     window.addEventListener('blur', away);
     window.addEventListener('focus', back);
     // any tap or key also means the player is back (some browsers skip the focus event)
@@ -66,6 +69,11 @@ class Music {
 
   /** Call every frame with real (not game) time. */
   update(realDt: number): void {
+    // second line of defence: whatever events a browser skips, a page that is hidden or
+    // not focused never plays music (checked every frame while the page still draws)
+    const looking = document.visibilityState === 'visible' && document.hasFocus();
+    if (!looking) this.goAway();
+    else if (this.away) this.away = false;
     const step = realDt / MUSIC_FADE_SECONDS;
     for (const track of this.els.keys()) {
       const target = track === this.want ? 1 : 0;

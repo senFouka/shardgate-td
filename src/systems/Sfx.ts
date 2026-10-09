@@ -33,6 +33,14 @@ class Sfx {
     window.addEventListener('pointerdown', unlock);
     window.addEventListener('touchend', unlock);
     window.addEventListener('keydown', unlock);
+    // looking away puts the whole sound engine to sleep (as Phaser does); coming back wakes it
+    const sleep = () => void this.ctx?.suspend();
+    const wake = () => {
+      if (document.visibilityState === 'visible') unlock();
+    };
+    window.addEventListener('blur', sleep);
+    window.addEventListener('focus', wake);
+    document.addEventListener('visibilitychange', () => (document.visibilityState === 'hidden' ? sleep() : wake()));
     // ads and the platform's own mute setting silence everything at once
     platform.onAudioSuppressedChange((suppressed) => {
       if (suppressed) this.stopAll();
