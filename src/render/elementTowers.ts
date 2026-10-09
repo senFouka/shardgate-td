@@ -1,15 +1,16 @@
 import * as THREE from 'three';
 import type { ElementId } from '../data/elements';
 import { Particles, rand } from './particles';
-import { buildOrnate, type Ornate } from './ornate';
+import { towerBody } from './towerBodies';
 import type { TowerView } from './towers';
 import { dynamic } from './bake';
 import { TOWER_GLOW } from './towers';
 import { animatedMaterial } from './towerBatch';
 
 /**
- * The six element towers, our own designs on the ornate tower kit: each has
- * its element's panel colour and gems, and a head that shows what it does:
+ * The six element towers, our own designs: each has its own body
+ * (towerBodies.ts: basalt forge, ice prisms, copper coils, standing stones,
+ * root trunk, coral fountain) and a head that shows what it does:
  * Ember a burning brazier, Frost a crown of ice crystals, Gale a crackling
  * orb, Stone a floating boulder, Venom a bubbling cauldron, Tide a swirling
  * sphere of water. Higher levels are taller, carry more gold, and grow the
@@ -21,7 +22,6 @@ const flat = (color: number, extra: Partial<THREE.MeshStandardMaterialParameters
 
 const GOLD = new THREE.MeshStandardMaterial({ color: 0xd8a94c, metalness: 1, roughness: 0.32 });
 const BRONZE = flat(0x8a5a2c, { metalness: 0.7, roughness: 0.38 });
-const IRON = flat(0x2e3036, { metalness: 0.6, roughness: 0.45 });
 const ROCK = flat(0x6f655a, { roughness: 0.95 });
 
 function shadows(g: THREE.Object3D): void {
@@ -34,13 +34,13 @@ function shadows(g: THREE.Object3D): void {
   });
 }
 
-/** Common shell: the ornate body plus a head group sitting on its crown. */
-function shell(panel: number, glow: THREE.Color, level: number, shape: 'hourglass' | 'drum'): { g: THREE.Group; orn: Ornate; head: THREE.Group; muzzle: THREE.Object3D } {
+/** The element's own body (towerBodies.ts) plus a head group sitting on top of it. */
+function shell(el: ElementId, level: number): { g: THREE.Group; orn: { update(t: number): void; pulse(): void }; head: THREE.Group; muzzle: THREE.Object3D } {
   const g = new THREE.Group();
-  const orn = buildOrnate({ panel, glow, tier: level, shape });
+  const orn = towerBody(el, level);
   g.add(orn.group);
   const head = new THREE.Group();
-  head.position.y = orn.topY + 0.05;
+  head.position.y = orn.topY + 0.02;
   g.add(head);
   const muzzle = new THREE.Object3D();
   head.add(muzzle);
@@ -71,7 +71,7 @@ const wp = new THREE.Vector3();
 
 /** Ember Brazier: a bronze fire bowl with a living flame; bigger flame per level. */
 function emberTower(fx: Particles, L: number): TowerView {
-  const { g, orn, head, muzzle } = shell(0x9a2e12, new THREE.Color(1.8, 0.6, 0.12), L, 'drum');
+  const { g, orn, head, muzzle } = shell('ember', L);
   const bowlProf = [
     new THREE.Vector2(0.06, 0), new THREE.Vector2(0.14, 0.02), new THREE.Vector2(0.27, 0.12),
     new THREE.Vector2(0.32 + L * 0.02, 0.24), new THREE.Vector2(0.3 + L * 0.02, 0.26), new THREE.Vector2(0.001, 0.2),
@@ -149,7 +149,7 @@ function emberTower(fx: Particles, L: number): TowerView {
 
 /** Frost Spire: a slender spire crowned with ice crystals that slowly turn. */
 function frostTower(fx: Particles, L: number): TowerView {
-  const { g, orn, head, muzzle } = shell(0x2a78b8, new THREE.Color(0.45, 1.1, 1.9), L, 'hourglass');
+  const { g, orn, head, muzzle } = shell('frost', L);
   const ice = animatedMaterial(new THREE.MeshStandardMaterial({
     color: 0x5fb8f0, emissive: new THREE.Color(0.1, 0.45, 1.0), emissiveIntensity: 0.55, roughness: 0.12, metalness: 0.1,
     transparent: true, opacity: 0.9, flatShading: true,
@@ -218,7 +218,7 @@ function frostTower(fx: Particles, L: number): TowerView {
 
 /** Gale Orb: a storm sphere in gold halos (one more halo per level) that crackles. */
 function galeTower(fx: Particles, L: number): TowerView {
-  const { g, orn, head, muzzle } = shell(0x55229a, new THREE.Color(1.1, 0.7, 2.0), L, 'hourglass');
+  const { g, orn, head, muzzle } = shell('gale', L);
   head.position.y += 0.28;
   const orbMat = animatedMaterial(new THREE.MeshStandardMaterial({ color: 0x6a4cff, emissive: new THREE.Color(0.45, 0.4, 1.4), emissiveIntensity: 1, roughness: 0.15 }));
   const orb = dynamic(new THREE.Mesh(new THREE.SphereGeometry(0.15 + L * 0.025, 20, 14), orbMat));
@@ -270,7 +270,7 @@ function galeTower(fx: Particles, L: number): TowerView {
 
 /** Stone Monolith: a rune-cut boulder hovering over a squat drum, with orbiting stones. */
 function stoneTower(fx: Particles, L: number): TowerView {
-  const { g, orn, head, muzzle } = shell(0x6b4a2a, new THREE.Color(1.8, 1.1, 0.35), L, 'drum');
+  const { g, orn, head, muzzle } = shell('stone', L);
   const geo = new THREE.DodecahedronGeometry(0.24 + L * 0.03, 0);
   const pos = geo.attributes.position;
   for (let i = 0; i < pos.count; i++) {
@@ -343,12 +343,13 @@ function stoneTower(fx: Particles, L: number): TowerView {
 
 /** Venom Font: an iron cauldron of glowing poison between thorns; bubbles rise from it. */
 function venomTower(fx: Particles, L: number): TowerView {
-  const { g, orn, head, muzzle } = shell(0x2f5a1a, new THREE.Color(0.7, 1.9, 0.25), L, 'drum');
+  const { g, orn, head, muzzle } = shell('venom', L);
   const prof = [
     new THREE.Vector2(0.001, 0), new THREE.Vector2(0.16, 0.01), new THREE.Vector2(0.28, 0.1),
     new THREE.Vector2(0.3, 0.22), new THREE.Vector2(0.25, 0.32), new THREE.Vector2(0.28, 0.35), new THREE.Vector2(0.24, 0.36), new THREE.Vector2(0.001, 0.3),
   ];
-  const pot = new THREE.Mesh(new THREE.LatheGeometry(prof, 12), IRON);
+  // a hollow, gnarled seed pod grown out of the trunk
+  const pot = new THREE.Mesh(new THREE.LatheGeometry(prof, 9), flat(0x5a3f2c, { roughness: 0.9 }));
   head.add(pot);
   const brew = new THREE.Mesh(new THREE.CircleGeometry(0.24, 14), animatedMaterial(new THREE.MeshStandardMaterial({ color: 0x3a8a10, emissive: new THREE.Color(0.7, 2.0, 0.2), emissiveIntensity: 1.2, roughness: 0.2 })));
   brew.rotation.x = -Math.PI / 2;
@@ -397,7 +398,7 @@ function venomTower(fx: Particles, L: number): TowerView {
 
 /** Tide Well: a floating sphere of water inside spinning rings, dripping into the crown. */
 function tideTower(fx: Particles, L: number): TowerView {
-  const { g, orn, head, muzzle } = shell(0x0f5a6e, new THREE.Color(0.3, 1.5, 1.9), L, 'hourglass');
+  const { g, orn, head, muzzle } = shell('tide', L);
   head.position.y += 0.3;
   const water = animatedMaterial(new THREE.MeshStandardMaterial({
     color: 0x2aa8d8, emissive: new THREE.Color(0.15, 0.9, 1.3), emissiveIntensity: 1.0, roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.85,
