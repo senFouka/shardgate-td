@@ -48,23 +48,17 @@ test('counter cycle: x1.5 against the next element, x0.5 against the previous, x
   assert.equal(WAVE_ARMOR.length, BALANCE.waves.count);
 });
 
-/** Plays undefended waves until the wave-5 element offer appears. */
+/** The first element offer is there from the start; nothing to play through. */
 function toFirstPick(g: Game): void {
   g.lives = 1000;
-  g.callWave();
-  while (!g.offer && g.wave < BALANCE.elements.every) {
-    run(g, BALANCE.waves.size * BALANCE.waves.spacing + 0.5);
-    g.callWave();
-  }
 }
 
-test('no element before wave 5; the first pick (at wave 5) unlocks at once', () => {
+test('the first element is offered at the start and unlocks at once', () => {
   const g = new Game(7);
   const [c, r] = grassCells()[30];
-  assert.equal(g.offer, null, 'no element offer at the start');
   assert.equal(g.build('ember', c, r), 'locked');
   toFirstPick(g);
-  assert.equal(g.wave, BALANCE.elements.every);
+  assert.equal(g.wave, 0);
   assert.ok(g.offer && g.offer.length === 3 && new Set(g.offer).size === 3);
   const el = g.offer![0];
   assert.equal(g.pick(el), el);
@@ -88,13 +82,14 @@ test('later picks come every 5th wave and summon the element boss; killing it un
   const g = new Game(11);
   toFirstPick(g);
   g.pick(g.offer![0]);
-  while (g.wave < BALANCE.elements.every * 2) {
+  g.callWave();
+  while (g.wave < BALANCE.elements.every) {
     assert.equal(g.offer, null);
     run(g, 1);
     g.callWave();
   }
-  assert.equal(g.wave, BALANCE.elements.every * 2);
-  assert.ok(g.offer, 'a pick is offered when wave 10 starts');
+  assert.equal(g.wave, BALANCE.elements.every);
+  assert.ok(g.offer, 'a pick is offered when wave 5 starts');
   const el = g.offer!.find((e) => g.elements[e] === 0)!;
   g.pick(el);
   assert.equal(g.elements[el], 0, 'not yet: the boss must fall first');

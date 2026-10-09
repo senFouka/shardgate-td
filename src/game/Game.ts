@@ -12,9 +12,8 @@
  * 10 s rest counts down to the next wave, which the player can start at any
  * time after the wave has finished spawning.
  *
- * Elements: the player picks one at the start of every 5th wave (none before
- * that: the first waves are Bolt and Mortar only, set by the user). The first
- * pick unlocks at once; each later pick summons that element's boss, and the
+ * Elements: the player picks one at the start of the game (it unlocks at once)
+ * and one at the start of every 5th wave; each later pick summons that element's boss, and the
  * element unlocks (or levels up) when the boss dies or gets through. Each wave wears an armor element; element towers deal
  * x1.5 to the next element in the cycle and x0.5 to the previous one.
  */
@@ -194,7 +193,7 @@ export class Game {
   private passiveTimer = 0;
   private nextId = 1;
   /** picks earned but not made yet */
-  private picksOwed = 0;
+  private picksOwed = 1;
   private picksMade = 0;
   /** rewarded-ad helps, each once (see CLAUDE.md "Ads") */
   private offerRerolled = false;
@@ -225,6 +224,8 @@ export class Game {
     this.routeLength = len;
     this.creepSpeed = len / BALANCE.waves.routeSeconds;
     this.grass = buildGrid().map((k) => k === 'grass');
+    // the first element is chosen at the start (free); later picks come every 5th wave
+    this.offer = this.makeOffer();
   }
 
   on(fn: (e: GameEvent) => void): void {

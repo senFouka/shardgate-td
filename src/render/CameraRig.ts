@@ -62,7 +62,8 @@ export class CameraRig {
     // perspective: the near (bottom) edge of the view is narrower, so leave extra width
     const needW = this.opts.width * 1.12 + 2;
     const needH = (this.opts.depth + 3) * Math.sin(this.pitch) + 3;
-    this.maxDist = Math.max(needW / this.camera.aspect, needH) / (2 * tanHalf);
+    // a little extra so the whole field and its surroundings fit with room to spare
+    this.maxDist = (Math.max(needW / this.camera.aspect, needH) / (2 * tanHalf)) * 1.12;
     this.minDist = this.opts.minCellsAcross / this.camera.aspect / (2 * tanHalf);
     this.goalDist = THREE.MathUtils.clamp(this.goalDist, this.minDist, this.maxDist);
     this.clampGoal();
@@ -193,11 +194,19 @@ export class CameraRig {
   }
 
   /** Keep the view over the map: the more zoomed in, the further it may move. */
+  /**
+   * Keeps the view near the battlefield: zoomed in, the whole map can be
+   * reached; zoomed out, there is still some room to look around, most of it
+   * toward the top, where the gates stand beyond the field.
+   */
   private clampGoal(): void {
     const hw = this.opts.width / 2;
     const hd = this.opts.depth / 2;
     const t = 1 - (this.goalDist - this.minDist) / Math.max(0.001, this.maxDist - this.minDist);
-    this.goal.x = THREE.MathUtils.clamp(this.goal.x, -hw * t, hw * t);
-    this.goal.z = THREE.MathUtils.clamp(this.goal.z, -hd * t, hd * t);
+    const slackX = 4;
+    const slackTop = 9;
+    const slackBottom = 4;
+    this.goal.x = THREE.MathUtils.clamp(this.goal.x, -hw * t - slackX, hw * t + slackX);
+    this.goal.z = THREE.MathUtils.clamp(this.goal.z, -hd * t - slackTop, hd * t + slackBottom);
   }
 }

@@ -19,7 +19,7 @@ import { buildAmbience, type Ambience } from './ambience';
 export class MapView {
   readonly group = new THREE.Group();
   readonly route = new RouteView();
-  private landmarks: Landmarks | null = null;
+  landmarks: Landmarks | null = null;
   private water: Water | null = null;
   /** pollen, fireflies and cloud shadows */
   readonly ambience: Ambience = buildAmbience();

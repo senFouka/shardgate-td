@@ -10,8 +10,9 @@ function run(game: Game, seconds: number): void {
 
 test('element offer: a fresh set of three once per pick, different from the first', () => {
   const g = new Game(4);
-  assert.equal(g.canRerollOffer, false, 'nothing to reroll before an offer');
   g.lives = 1000;
+  g.pick(g.offer![0]); // the free first pick
+  assert.equal(g.canRerollOffer, false, 'nothing to reroll without an offer');
   g.wave = BALANCE.elements.every - 1;
   g.callWave();
   const first = [...g.offer!];

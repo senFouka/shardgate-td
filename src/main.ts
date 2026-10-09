@@ -338,6 +338,7 @@ async function boot(): Promise<void> {
     rig.fit();
     mapView.route.setScale(renderer.bufferHeight(), camera.fov);
     mapView.ambience.setScale(renderer.bufferHeight(), camera.fov);
+    mapView.landmarks?.setScale(renderer.bufferHeight(), camera.fov);
     view.setScale(renderer.bufferHeight(), camera.fov);
   });
   renderer.resize();
@@ -390,6 +391,7 @@ async function boot(): Promise<void> {
     followSun();
     mapView.route.points.visible = game.phase === 'ready';
     mapView.ambience.setDensity(renderer.particleScale);
+    mapView.landmarks?.setDensity(renderer.particleScale);
     mapView.update(time, gdt);
     view.update(sdt, camera);
     const s = view.shakeAmount;
