@@ -18,10 +18,11 @@ export class SettingsPanel {
   private readonly refreshers: Array<() => void> = [];
   private readonly autoNote: HTMLElement;
   private readonly autoBtn: HTMLButtonElement;
+  private hideConfirm: () => void = () => undefined;
 
   constructor(
     private readonly graphics: GraphicsController,
-    private readonly hooks: { onOpen(): void; onClose(): void },
+    private readonly hooks: { onOpen(): void; onClose(): void; /** start this game over (after the player confirmed) */ onReset(): void },
   ) {
     const close = el('button', { class: 'ui-btn', type: 'button', 'aria-label': 'Close settings', html: ICONS.close });
     close.addEventListener('click', () => this.close());
@@ -72,8 +73,35 @@ export class SettingsPanel {
     detail('Particles', 'particles', [{ value: 'low', label: 'Fewer' }, { value: 'medium', label: 'Normal' }, { value: 'high', label: 'Lots' }]);
     detail('Screen effects', 'post', [{ value: false, label: 'Off' }, { value: true, label: 'On' }]);
 
+    // Reset asks first: it throws away the game in progress
+    const resetBtn = el('button', { class: 'ui-btn ui-danger', type: 'button', text: 'Reset game' });
+    const confirmBox = el('div', { class: 'ui-confirm', role: 'alertdialog', 'aria-labelledby': 'reset-title', hidden: '' });
+    const cancel = el('button', { class: 'ui-btn', type: 'button', text: 'Cancel' });
+    const yes = el('button', { class: 'ui-btn ui-danger', type: 'button', text: 'Yes, reset' });
+    confirmBox.append(
+      el('h3', { id: 'reset-title', text: 'Reset this game?' }),
+      el('p', { class: 'ui-note', text: 'Your towers, gold, elements and wave in this game will be lost, and a new game starts from wave 1. Your best waves and settings are kept.' }),
+      el('div', { class: 'ui-confirm-actions' }, [cancel, yes]),
+    );
+    resetBtn.addEventListener('click', () => {
+      confirmBox.hidden = false;
+      resetBtn.hidden = true;
+      cancel.focus();
+    });
+    cancel.addEventListener('click', () => this.hideConfirm());
+    yes.addEventListener('click', () => {
+      this.hideConfirm();
+      this.close();
+      this.hooks.onReset();
+    });
+    this.hideConfirm = () => {
+      confirmBox.hidden = true;
+      resetBtn.hidden = false;
+    };
+
     const panel = el('div', { class: 'ui-panel', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'settings-title' }, [
       el('div', { class: 'ui-head' }, [el('h2', { id: 'settings-title', text: 'Settings' }), close]),
+      el('section', { class: 'ui-section' }, [el('h3', { text: 'Game' }), resetBtn, confirmBox]),
       el('section', { class: 'ui-section' }, [el('h3', { text: 'Sound' }), sound.node, musicRow, sfxRow]),
       el('section', { class: 'ui-section' }, [
         el('h3', { text: 'Graphics quality' }),
@@ -106,6 +134,7 @@ export class SettingsPanel {
 
   close(): void {
     if (!this.isOpen) return;
+    this.hideConfirm();
     this.modal.hidden = true;
     this.hooks.onClose();
   }

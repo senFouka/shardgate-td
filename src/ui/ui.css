@@ -241,3 +241,12 @@ html, body { margin: 0; height: 100%; background: #0b0a08; overflow: hidden; tou
 .hud-ad-btn { background: linear-gradient(#4b3a12, #2c220c); border-color: #f2c14b; color: #ffe7a8; box-shadow: 0 0 0 2px rgba(242,193,75,.25), var(--ui-shadow); }
 .hud-ad-btn:hover { box-shadow: 0 0 0 3px rgba(242,193,75,.55), var(--ui-shadow); }
 .hud-continue { background: linear-gradient(#3a6a3a, #24452a); border-color: #8fd68f; color: #e8ffe8; }
+
+/* ------------------------------------------------------ reset confirm */
+.ui-danger { border-color: #c25a4a; color: #ffd2c8; }
+.ui-danger:hover { border-color: #ff7a66; }
+.ui-confirm { display: grid; gap: 10px; padding: 12px 14px; border-radius: 12px; border: 1px solid #c25a4a; background: rgba(120, 30, 20, 0.25); }
+.ui-confirm[hidden] { display: none; }
+.ui-confirm h3 { color: #ffd2c8; }
+.ui-confirm-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+.ui-confirm-actions .ui-btn { min-width: 120px; min-height: 52px; }

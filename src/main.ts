@@ -240,6 +240,11 @@ async function boot(): Promise<void> {
     onResume: () => (paused = false),
   });
   const settings = new SettingsPanel(graphics, {
+    // a reset is the player's own choice, not a break between games: no ad
+    onReset: () => {
+      if (!focusPause.visible) paused = false;
+      startGame();
+    },
     onOpen: () => {
       paused = true;
       platform.gameplayStop();
