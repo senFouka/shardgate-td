@@ -3,6 +3,8 @@ import type { ElementId } from '../data/elements';
 import { Particles, rand } from './particles';
 import { buildOrnate, type Ornate } from './ornate';
 import type { TowerView } from './towers';
+import { dynamic } from './bake';
+import { TOWER_GLOW } from './towers';
 
 /**
  * The six element towers, our own designs on the ornate tower kit: each has
@@ -107,7 +109,7 @@ function emberTower(fx: Particles, L: number): TowerView {
     );
     m.position.y = 0.22 + (l.h * (0.8 + L * 0.2)) / 2;
     flames.push(m);
-    head.add(m);
+    head.add(dynamic(m));
   }
   muzzle.position.y = 0.55;
   shadows(bowl);
@@ -151,7 +153,7 @@ function frostTower(fx: Particles, L: number): TowerView {
     color: 0x5fb8f0, emissive: new THREE.Color(0.1, 0.45, 1.0), emissiveIntensity: 0.55, roughness: 0.12, metalness: 0.1,
     transparent: true, opacity: 0.9, flatShading: true,
   });
-  const crown = new THREE.Group();
+  const crown = dynamic(new THREE.Group());
   head.add(crown);
   const center = new THREE.Mesh(new THREE.OctahedronGeometry(0.14 + L * 0.02, 0), ice);
   center.scale.y = 2.6;
@@ -176,7 +178,7 @@ function frostTower(fx: Particles, L: number): TowerView {
     halo = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.014, 6, 32), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.35, 0.9, 1.8), transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }));
     halo.position.y = 0.45;
     halo.rotation.x = Math.PI / 2;
-    head.add(halo);
+    head.add(dynamic(halo));
   }
   muzzle.position.y = 0.6 + L * 0.06;
   shadows(crown);
@@ -218,13 +220,13 @@ function galeTower(fx: Particles, L: number): TowerView {
   const { g, orn, head, muzzle } = shell(0x55229a, new THREE.Color(1.1, 0.7, 2.0), L, 'hourglass');
   head.position.y += 0.28;
   const orbMat = new THREE.MeshStandardMaterial({ color: 0x6a4cff, emissive: new THREE.Color(0.45, 0.4, 1.4), emissiveIntensity: 1, roughness: 0.15 });
-  const orb = new THREE.Mesh(new THREE.SphereGeometry(0.15 + L * 0.025, 20, 14), orbMat);
+  const orb = dynamic(new THREE.Mesh(new THREE.SphereGeometry(0.15 + L * 0.025, 20, 14), orbMat));
   head.add(orb);
   const halos: THREE.Mesh[] = [];
   for (let i = 0; i < L; i++) {
     const h = new THREE.Mesh(new THREE.TorusGeometry(0.25 + i * 0.07, 0.016, 6, 30), GOLD);
     halos.push(h);
-    head.add(h);
+    head.add(dynamic(h));
   }
   shadows(head);
   let flare = 0;
@@ -275,7 +277,7 @@ function stoneTower(fx: Particles, L: number): TowerView {
     pos.setXYZ(i, pos.getX(i) * k, pos.getY(i) * k * 1.15, pos.getZ(i) * k);
   }
   geo.computeVertexNormals();
-  const boulder = new THREE.Mesh(geo, ROCK);
+  const boulder = dynamic(new THREE.Mesh(geo, ROCK));
   boulder.position.y = 0.45;
   head.add(boulder);
   const runeMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 1.6, 0.5) });
@@ -293,7 +295,7 @@ function stoneTower(fx: Particles, L: number): TowerView {
   for (let i = 0; i < 1 + L; i++) {
     const p = new THREE.Mesh(new THREE.DodecahedronGeometry(0.06 + (i % 2) * 0.02, 0), ROCK);
     pebbles.push(p);
-    head.add(p);
+    head.add(dynamic(p));
   }
   // gold brackets reaching up to the boulder
   for (let i = 0; i < 4; i++) {
@@ -320,7 +322,7 @@ function stoneTower(fx: Particles, L: number): TowerView {
       dip = Math.max(0, dip - dt * 3);
       boulder.position.y = 0.45 + Math.sin(time * 1.4) * 0.05 - dip * 0.12;
       boulder.rotation.y = time * 0.4;
-      runeMat.color.setRGB(2.2 + dip * 2, 1.3 + dip, 0.4);
+      runeMat.color.setRGB((2.2 + dip * 2) * TOWER_GLOW, (1.3 + dip) * TOWER_GLOW, 0.4 * TOWER_GLOW);
       pebbles.forEach((p, i) => {
         const a = time * (1.2 - i * 0.15) + (i / pebbles.length) * Math.PI * 2;
         p.position.set(Math.cos(a) * 0.44, 0.35 + Math.sin(time * 2 + i) * 0.08, Math.sin(a) * 0.44);
@@ -350,7 +352,7 @@ function venomTower(fx: Particles, L: number): TowerView {
   const brew = new THREE.Mesh(new THREE.CircleGeometry(0.24, 14), new THREE.MeshStandardMaterial({ color: 0x3a8a10, emissive: new THREE.Color(0.7, 2.0, 0.2), emissiveIntensity: 1.2, roughness: 0.2 }));
   brew.rotation.x = -Math.PI / 2;
   brew.position.y = 0.32;
-  head.add(brew);
+  head.add(dynamic(brew));
   // thorns curling up around the cauldron (more with level)
   const thornMat = flat(0x24401a, { roughness: 0.7 });
   const n = 3 + L * 2;
@@ -399,14 +401,14 @@ function tideTower(fx: Particles, L: number): TowerView {
   const water = new THREE.MeshStandardMaterial({
     color: 0x2aa8d8, emissive: new THREE.Color(0.15, 0.9, 1.3), emissiveIntensity: 1.0, roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.85,
   });
-  const sphere = new THREE.Mesh(new THREE.IcosahedronGeometry(0.17 + L * 0.03, 2), water);
+  const sphere = dynamic(new THREE.Mesh(new THREE.IcosahedronGeometry(0.17 + L * 0.03, 2), water));
   head.add(sphere);
   const rings: THREE.Mesh[] = [];
   const ringMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.6, 2.2, 2.8), transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false });
   for (let i = 0; i < 1 + L; i++) {
     const r = new THREE.Mesh(new THREE.TorusGeometry(0.26 + i * 0.06, 0.02, 6, 30), i === 0 ? GOLD : ringMat);
     rings.push(r);
-    head.add(r);
+    head.add(dynamic(r));
   }
   shadows(sphere);
   let flare = 0;

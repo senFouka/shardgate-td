@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { dynamic } from './bake';
 
 /**
  * Ornate fantasy towers, built in code. Our own design language for the
@@ -273,7 +274,7 @@ export function buildOrnate(spec: OrnateSpec): Ornate {
     for (let i = 0; i < 4; i++) {
       const s = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), gemMat);
       s.scale.y = 2.2;
-      shards.push(s);
+      shards.push(dynamic(s));
       g.add(s);
     }
   }

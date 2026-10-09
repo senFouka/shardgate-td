@@ -3,6 +3,7 @@ import { isElement, type TowerId } from '../game/Game';
 import { createElementTower } from './elementTowers';
 import { Particles, rand } from './particles';
 import { buildOrnate } from './ornate';
+import { bakeStatic, dynamic } from './bake';
 
 /**
  * Tower models, our own designs built in code on the ornate tower kit
@@ -58,9 +59,38 @@ function plinth(radius: number): THREE.Group {
   return g;
 }
 
-export function createTower(kind: TowerId, fx: Particles, level = 1): TowerView {
-  if (isElement(kind)) return createElementTower(kind, fx, level);
-  return kind === 'bolt' ? boltTower(fx, level) : mortarTower(fx, level);
+/**
+ * How bright towers glow (emissive light, glowing additive parts and the
+ * sparks they give off): 0.5 = half of the original design (set by the user).
+ */
+export const TOWER_GLOW = 0.5;
+
+const dimmed = new WeakSet<THREE.Material>();
+
+/** Halves a tower's own light once per material (shared materials stay dimmed once). */
+function dimGlow(root: THREE.Object3D): void {
+  root.traverse((o) => {
+    const m = (o as THREE.Mesh).material as THREE.Material | undefined;
+    if (!m || Array.isArray(m) || dimmed.has(m)) return;
+    dimmed.add(m);
+    const std = m as THREE.MeshStandardMaterial;
+    if (std.emissive) std.emissive.multiplyScalar(TOWER_GLOW);
+    else if ((m as THREE.MeshBasicMaterial).color && m.blending === THREE.AdditiveBlending) (m as THREE.MeshBasicMaterial).color.multiplyScalar(TOWER_GLOW);
+  });
+}
+
+/** The tower's particle emitter, with its sparks and flames at the tower glow. */
+function dimFx(fx: Particles): Particles {
+  return { emit: (p: Parameters<Particles['emit']>[0]) => fx.emit({ ...p, r: p.r * TOWER_GLOW, g: p.g * TOWER_GLOW, b: p.b * TOWER_GLOW }) } as unknown as Particles;
+}
+
+export function createTower(kind: TowerId, fxFull: Particles, level = 1): TowerView {
+  const fx = dimFx(fxFull);
+  const view = isElement(kind) ? createElementTower(kind, fx, level) : kind === 'bolt' ? boltTower(fx, level) : mortarTower(fx, level);
+  dimGlow(view.group);
+  // ~25 pieces -> a handful of meshes (each piece is drawn twice: shadow + main pass)
+  bakeStatic(view.group);
+  return view;
 }
 
 /** Smoothly turns `head` toward `want` (radians). */
@@ -108,13 +138,13 @@ function boltTower(fx: Particles, level: number): TowerView {
     }
     for (let i = 0; i < 3; i++) {
       const r = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.13, 0.03), MATS.boltGlow);
-      runes.push(r);
+      runes.push(dynamic(r));
       g.add(r);
     }
   }
 
   // the head: an arbalest with brass limbs and a glowing bolt
-  const head = new THREE.Group();
+  const head = dynamic(new THREE.Group());
   head.position.y = collarY + 0.1;
   const stock = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.12, 0.62 + (L - 1) * 0.06), MATS.wood);
   stock.position.z = 0.06;
@@ -183,7 +213,7 @@ export function orbTower(fx: Particles, tier: number): TowerView {
   const g = new THREE.Group();
   const orn = buildOrnate({ panel: 0x1f3f9e, glow: new THREE.Color(0.35, 0.8, 1.4), tier, shape: 'hourglass' });
   g.add(orn.group);
-  const head = new THREE.Group();
+  const head = dynamic(new THREE.Group());
   head.position.y = orn.topY + 0.32;
   const orbMat = flat(0x2a6fd0, { emissive: new THREE.Color(0.45, 0.85, 1.6), emissiveIntensity: 1.8, roughness: 0.15, flatShading: false });
   const orb = new THREE.Mesh(new THREE.SphereGeometry(0.15 + tier * 0.02, 20, 14), orbMat);
@@ -233,7 +263,7 @@ function mortarTower(fx: Particles, level: number): TowerView {
   const g = new THREE.Group();
   const orn = buildOrnate({ panel: 0x8e1f22, glow: new THREE.Color(1.6, 0.55, 0.15), tier: level, shape: 'drum' });
   g.add(orn.group);
-  const head = new THREE.Group();
+  const head = dynamic(new THREE.Group());
   head.position.y = orn.topY + 0.02;
   const cradle = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.24, 0.1, 8), MATS.iron);
   cradle.position.y = 0.05;

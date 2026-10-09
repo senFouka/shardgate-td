@@ -14,6 +14,8 @@ class Music {
   private readonly level = new Map<MusicTrack, number>();
   private want: MusicTrack | null = null;
   private unlocked = false;
+  /** the page is hidden or another window has focus: no music */
+  private away = false;
 
   init(): void {
     const probe = document.createElement('audio');
@@ -36,6 +38,21 @@ class Music {
     };
     window.addEventListener('pointerdown', unlock);
     window.addEventListener('keydown', unlock);
+    // looking away stops the music at once (the frame loop may not run while hidden);
+    // coming back fades it in again
+    const away = () => {
+      this.away = true;
+      for (const [track, el] of this.els) {
+        el.pause();
+        this.level.set(track, 0);
+      }
+    };
+    const back = () => {
+      if (document.visibilityState === 'visible' && document.hasFocus()) this.away = false;
+    };
+    window.addEventListener('blur', away);
+    window.addEventListener('focus', back);
+    document.addEventListener('visibilitychange', () => (document.visibilityState === 'hidden' ? away() : back()));
     platform.onAudioSuppressedChange(() => this.apply());
   }
 
@@ -56,7 +73,7 @@ class Music {
   }
 
   private apply(): void {
-    const silent = !this.unlocked || profile.muted || platform.isAudioSuppressed();
+    const silent = this.away || !this.unlocked || profile.muted || platform.isAudioSuppressed();
     for (const [track, el] of this.els) {
       const level = this.level.get(track) ?? 0;
       const vol = silent ? 0 : level * profile.musicVolume * MUSIC[track].gain;
