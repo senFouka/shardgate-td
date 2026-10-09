@@ -11,6 +11,7 @@ import { GameRenderer } from './render/GameRenderer';
 import { GraphicsController } from './render/GraphicsController';
 import { CameraRig } from './render/CameraRig';
 import { MapView } from './render/MapView';
+import { setCreepOutlines } from './render/creeps';
 import { Particles } from './render/particles';
 import { CreepRoster } from './render/creepModels';
 import { MAP } from './data/map';
@@ -392,6 +393,8 @@ async function boot(): Promise<void> {
     mapView.route.points.visible = game.phase === 'ready';
     mapView.ambience.setDensity(renderer.particleScale);
     mapView.landmarks?.setDensity(renderer.particleScale);
+    // ink outlines on creeps cost a draw each: Medium and High only
+    setCreepOutlines(!!renderer.current && renderer.current.bloom);
     mapView.update(time, gdt);
     view.update(sdt, camera);
     const s = view.shakeAmount;

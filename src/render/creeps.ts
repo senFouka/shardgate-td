@@ -65,6 +65,35 @@ function pickClip(clips: THREE.AnimationClip[], ...patterns: RegExp[]): THREE.An
   return null;
 }
 
+/** Dark cartoon outline thickness in world units (cells), the same on every creep. */
+const OUTLINE_WORLD = 0.022;
+const outlineMats = new Map<number, THREE.MeshBasicMaterial>();
+
+/**
+ * The outline material for a body scaled by `scale`: a dark copy drawn from
+ * the back faces, pushed out along the normals (the classic inverted hull),
+ * so every creep gets the same ink line around its silhouette.
+ */
+function outlineMaterial(scale: number): THREE.MeshBasicMaterial {
+  const key = Math.round(scale * 10000);
+  let m = outlineMats.get(key);
+  if (m) return m;
+  m = new THREE.MeshBasicMaterial({ color: 0x1a1210, side: THREE.BackSide });
+  const thick = OUTLINE_WORLD / Math.max(0.0001, scale);
+  m.onBeforeCompile = (shader) => {
+    shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>\n  transformed += normalize(normal) * ${thick.toFixed(6)};`);
+  };
+  m.customProgramCacheKey = () => `outline-${key}`;
+  outlineMats.set(key, m);
+  return m;
+}
+
+/** Whether new creeps get the ink outline (Medium and High graphics). */
+let outlines = true;
+export function setCreepOutlines(on: boolean): void {
+  outlines = on;
+}
+
 /**
  * @param sharedBar the game draws all health bars in one batch (render/healthBars.ts);
  *   the visual slices pass false and get the creep's own bar meshes
@@ -105,6 +134,26 @@ export function createCreepView(model: CreepModel, isBig: boolean, sharedBar = f
     });
     m.material = Array.isArray(m.material) ? cloned : cloned[0];
   });
+  // the ink outline: one dark back-face copy per body mesh, sharing its skeleton
+  if (outlines) {
+    const parts: THREE.Mesh[] = [];
+    body.traverse((o) => {
+      if ((o as THREE.Mesh).isMesh) parts.push(o as THREE.Mesh);
+    });
+    const mat = outlineMaterial(s);
+    for (const m of parts) {
+      const skinned = m as THREE.SkinnedMesh;
+      const line = skinned.isSkinnedMesh ? new THREE.SkinnedMesh(m.geometry, mat) : new THREE.Mesh(m.geometry, mat);
+      if (skinned.isSkinnedMesh) (line as unknown as THREE.SkinnedMesh).bind(skinned.skeleton, skinned.bindMatrix);
+      line.position.copy(m.position);
+      line.quaternion.copy(m.quaternion);
+      line.scale.copy(m.scale);
+      line.frustumCulled = false;
+      line.castShadow = false;
+      line.userData.outline = true;
+      m.parent?.add(line);
+    }
+  }
 
   const mixer = new THREE.AnimationMixer(body);
   const clips = model.gltf.animations;
