@@ -48,10 +48,13 @@ class Music {
       }
     };
     const back = () => {
-      if (document.visibilityState === 'visible' && document.hasFocus()) this.away = false;
+      if (document.visibilityState === 'visible') this.away = false;
     };
     window.addEventListener('blur', away);
     window.addEventListener('focus', back);
+    // any tap or key also means the player is back (some browsers skip the focus event)
+    window.addEventListener('pointerdown', back);
+    window.addEventListener('keydown', back);
     document.addEventListener('visibilitychange', () => (document.visibilityState === 'hidden' ? away() : back()));
     platform.onAudioSuppressedChange(() => this.apply());
   }
