@@ -88,6 +88,10 @@ Slices merged into main; direction B (Phaser + baked sprites) removed.
 - [x] Midgame ad only between games: Play again / a difficulty on the end screen. Never during a wave or before the first wave.
 - [x] Hidden when ads are off (VITE_ADS=off build, or the SDK reports Basic Launch). Tested in Chrome with the CrazyGames SDK local demo ads (about 5 s each); 3 rule tests in `tests/ads.test.ts`.
 
+## Later small changes (2026-10-09)
+- First two bosses (waves 5, 10) 30% weaker (`bosses.earlyHp`). Ad offers styled apart; lives refill offered from the first lost life. Reset game (with confirmation) in Settings. No interest countdown under gold. Graphics details fold away in Settings.
+- Rewarded ad for gold, once per wave: tapping a build or Upgrade without enough gold offers the price (capped at `ads.goldMax`), then builds/upgrades. Note: a tower bought this way can be sold the same wave for a full refund, so it works like a once-per-wave gold ad.
+
 ## Notes for the proposal (1b)
 A throwaway sim (not in the repo) compared, at equal tower counts, a
 "gauntlet" (towers hugging the straight path) with a comb maze on the

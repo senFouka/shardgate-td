@@ -122,7 +122,7 @@ export interface Shot {
   chain: Array<{ col: number; row: number }> | null;
 }
 
-export type GoldReason = 'kill' | 'interest' | 'income' | 'build' | 'upgrade' | 'sell' | 'early' | 'convert' | 'pick';
+export type GoldReason = 'kill' | 'interest' | 'income' | 'build' | 'upgrade' | 'sell' | 'early' | 'convert' | 'pick' | 'ad';
 
 export type GameEvent =
   | { type: 'wave-start'; wave: number; boss: boolean }
@@ -197,6 +197,8 @@ export class Game {
   private offerRerolled = false;
   private livesRefilled = false;
   private continued = false;
+  /** the wave in which the gold ad was last used (-1: not yet) */
+  private adGoldWave = -1;
   private rng: number;
   private readonly listeners: Array<(e: GameEvent) => void> = [];
 
@@ -352,6 +354,19 @@ export class Game {
     this.livesRefilled = true;
     this.lives = this.maxLives;
     this.emit({ type: 'lives', lives: this.lives });
+    return true;
+  }
+
+  /** Gold for a build or upgrade the player cannot afford: once per wave (rewarded ad). */
+  get canAdGold(): boolean {
+    return this.phase !== 'won' && this.phase !== 'lost' && this.adGoldWave !== this.wave;
+  }
+
+  /** Grants the price of the thing the player wanted (capped), and uses up this wave's gold ad. */
+  grantAdGold(amount: number): boolean {
+    if (!this.canAdGold || amount <= 0) return false;
+    this.adGoldWave = this.wave;
+    this.addGold(Math.min(Math.round(amount), BALANCE.ads.goldMax), 'ad');
     return true;
   }
 

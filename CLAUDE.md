@@ -121,7 +121,7 @@ Element pick: on waves 5, 10, 15 … choose 1 of 3 offered elements, or take a *
 - Daily challenge (later): fixed seed, fixed elements, shared for the day.
 
 ## Ads (fair rules, same as Element Warden)
-- Rewarded, by player choice only: one extra element reroll per pick, one lives refill per game, one continue after game over (resume the current wave with half lives).
+- Rewarded, by player choice only: one extra element reroll per pick, one lives refill per game, one continue after game over (resume the current wave with half lives), and (user, 2026-10-09) once per wave, gold for a build or upgrade the player cannot afford: the ad pays that price and the build/upgrade happens.
 - Midgame ad only at natural breaks: game over / victory → next game. Never during a wave or the build phase.
 - No fake timers, no pressure mechanics, no paywalls. Much of the audience is teenagers.
 

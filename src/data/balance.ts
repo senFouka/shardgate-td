@@ -161,6 +161,9 @@ export const BALANCE = {
     bossLeakCost: 3,
   },
 
+  /** rewarded-ad gold for a build or upgrade the player cannot afford (once per wave, set by the user) */
+  ads: { goldMax: 200 },
+
   waves: {
     /** a full game */
     count: 40,

@@ -62,6 +62,8 @@ export interface HudHooks {
   onAdReroll(): void;
   onAdRefill(): void;
   onAdContinue(): void;
+  /** gold for the upgrade of this tower, then the upgrade */
+  onAdUpgrade(tower: Tower): void;
   onRestart(): void;
 }
 
@@ -82,6 +84,9 @@ export class GameHud {
   private readonly buildBtns = new Map<TowerId, HTMLButtonElement>();
   private readonly picker = el('div', { class: 'hud-pick', hidden: '' });
   private readonly panel = el('div', { class: 'hud-panel', hidden: '' });
+  /** "not enough gold: watch an ad" offer for a build the player tapped */
+  private readonly goldOffer = el('div', { class: 'hud-gold-offer', role: 'dialog', hidden: '' });
+  private goldOfferTimer = 0;
   private readonly end = el('div', { class: 'ui-modal', hidden: '' });
   private picked: TowerId | null = null;
   private shown: Tower | null = null;
@@ -101,7 +106,7 @@ export class GameHud {
     this.refillBtn.innerHTML = `${AD_ICON}<span>Refill lives</span>`;
     this.refillBtn.addEventListener('click', () => this.hooks.onAdRefill());
     this.waveBtn.addEventListener('click', () => this.game.callWave());
-    uiRoot().append(top, this.diffRow, this.bar, this.picker, this.panel, this.end);
+    uiRoot().append(top, this.diffRow, this.bar, this.picker, this.panel, this.goldOffer, this.end);
     window.addEventListener('keydown', (e) => {
       // keys by physical position (works on AZERTY too); no Escape: it belongs to the browser
       if (e.code === 'KeyX') {
@@ -228,6 +233,8 @@ export class GameHud {
     sell.addEventListener('click', () => this.hooks.onSell(t));
     const close = el('button', { class: 'ui-btn hud-close', type: 'button', 'aria-label': 'Close', text: '✕' });
     close.addEventListener('click', () => this.hooks.onCloseTower());
+    const adUp = el('button', { class: 'ui-btn hud-ad-btn hud-ad-upgrade', type: 'button', hidden: '' });
+    adUp.addEventListener('click', () => this.hooks.onAdUpgrade(t));
     this.panel.replaceChildren(
       el('div', { class: 'hud-panel-head' }, [
         el('span', { class: 'hud-tower-icon', html: TOWER_INFO[t.kind].icon }),
@@ -239,6 +246,7 @@ export class GameHud {
       el('div', { class: 'hud-effect' }),
       el('div', { class: 'hud-convert' }),
       el('div', { class: 'hud-actions' }, [upgrade, sell]),
+      adUp,
     );
     this.panelKey = '';
     this.refreshPanel(true);
@@ -251,7 +259,7 @@ export class GameHud {
     const g = this.game;
     const cost = g.upgradeCost(t);
     const owned = ELEMENT_ORDER.filter((e) => g.elements[e] > 0);
-    const key = `${t.id}:${t.kind}:${t.level}:${t.kills}:${g.gold}:${g.refundFor(t)}:${owned.join()}:${g.wave}:${t.work ? Math.ceil(t.work.left) : '-'}`;
+    const key = `${t.id}:${t.kind}:${t.level}:${t.kills}:${g.gold}:${g.refundFor(t)}:${owned.join()}:${g.wave}:${t.work ? Math.ceil(t.work.left) : '-'}:${this.canOfferGold()}`;
     if (!force && key === this.panelKey) return;
     this.panelKey = key;
     const s = towerStats(t.kind, t.level);
@@ -311,6 +319,42 @@ export class GameHud {
       up.disabled = g.gold < cost;
     }
     this.panel.querySelector('.hud-sell')!.textContent = `Sell +${g.refundFor(t)}`;
+    // can't afford the upgrade: an ad can pay for it (once per wave)
+    const adUp = this.panel.querySelector<HTMLButtonElement>('.hud-ad-upgrade')!;
+    adUp.hidden = !(cost !== null && !t.work && g.gold < cost && this.canOfferGold());
+    if (!adUp.hidden) adUp.innerHTML = `${AD_ICON}<span>Watch an ad: +${cost} gold &amp; upgrade</span>`;
+  }
+
+  /** True when an ad-for-gold offer can be made now. */
+  canOfferGold(): boolean {
+    return this.adsOn && this.game.canAdGold;
+  }
+
+  /**
+   * Offers gold for something the player could not afford ("Not enough gold
+   * for X"): a rewarded ad grants its price. Goes away by itself after a while.
+   */
+  offerGold(what: string, price: number, onWatch: () => void): void {
+    const watch = el('button', { class: 'ui-btn hud-ad-btn', type: 'button' });
+    watch.innerHTML = `${AD_ICON}<span>Watch an ad: +${price} gold</span>`;
+    const close = el('button', { class: 'ui-btn hud-close', type: 'button', 'aria-label': 'No thanks', text: '✕' });
+    const hide = () => {
+      this.goldOffer.hidden = true;
+      clearTimeout(this.goldOfferTimer);
+    };
+    watch.addEventListener('click', () => {
+      hide();
+      onWatch();
+    });
+    close.addEventListener('click', hide);
+    this.goldOffer.replaceChildren(
+      el('div', { class: 'hud-gold-offer-text' }, [el('b', { text: 'Not enough gold' }), el('span', { text: `${what} costs ${price}. Once per wave.` })]),
+      watch,
+      close,
+    );
+    this.goldOffer.hidden = false;
+    clearTimeout(this.goldOfferTimer);
+    this.goldOfferTimer = window.setTimeout(hide, 7000);
   }
 
   /** One button per difficulty; the current one is pressed. */

@@ -50,3 +50,17 @@ test('continue after a loss: half lives, the game goes on, once per game', () =>
   assert.equal(g.phase, 'lost');
   assert.equal(g.continueGame(), false, 'only once');
 });
+
+test('gold for an unaffordable build or upgrade: the price, once per wave', () => {
+  const g = new Game(5);
+  g.gold = 3;
+  const price = 40;
+  assert.equal(g.canAdGold, true);
+  assert.equal(g.grantAdGold(price), true);
+  assert.equal(g.gold, 3 + price);
+  assert.equal(g.grantAdGold(price), false, 'once per wave');
+  g.callWave();
+  assert.equal(g.canAdGold, true, 'a new wave, a new chance');
+  assert.equal(g.grantAdGold(10_000), true);
+  assert.equal(g.gold, 3 + price + BALANCE.ads.goldMax, 'capped');
+});

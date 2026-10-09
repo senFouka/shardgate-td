@@ -21,6 +21,7 @@ import { SettingsPanel } from './ui/SettingsPanel';
 import { mountCornerButtons } from './ui/Hud';
 import { GameHud } from './ui/GameHud';
 import { ELEMENTS } from './data/elements';
+import { towerStats } from './data/balance';
 import { CREEP_LOOKS } from './data/creeps';
 import { toast } from './ui/Toast';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
@@ -31,6 +32,9 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
  */
 const PITCH_DEG = 56;
 const SKY = 0x2a3a2a;
+/** Display name of a tower kind, for messages. */
+const TOWER_NAMES = (kind: string): string => (kind in ELEMENTS ? ELEMENTS[kind as keyof typeof ELEMENTS].tower : kind[0].toUpperCase() + kind.slice(1));
+
 const DENIED: Record<string, string> = {
   'not-grass': 'Towers go on the grass beside the road. Right-click (or X) to stop building.',
   occupied: 'There is already a tower there.',
@@ -135,6 +139,14 @@ async function boot(): Promise<void> {
     },
     onAdReroll: () => void rewarded(() => game.rerollOffer()),
     onAdRefill: () => void rewarded(() => game.refillLives()),
+    onAdUpgrade: (t) =>
+      void rewarded(() => {
+        const cost = game.upgradeCost(t);
+        if (cost === null || !game.grantAdGold(cost)) return false;
+        game.upgrade(t);
+        hud.showTower(t);
+        return true;
+      }),
     onAdContinue: () =>
       void rewarded(() => {
         if (!game.continueGame()) return false;
@@ -146,7 +158,20 @@ async function boot(): Promise<void> {
   const input = new BuildInput(camera, canvas, rig, scene, new Particles(8, true), {
     onSelect: (t) => hud.showTower(t),
     onBuilt: () => undefined,
-    onDenied: (reason) => {
+    onDenied: (reason, kind, col, row) => {
+      // not enough gold: offer an ad that pays for this tower, then build it here
+      if (reason === 'gold' && hud.canOfferGold()) {
+        const price = towerStats(kind, 1).cost;
+        sfx.play('denied');
+        hud.offerGold(TOWER_NAMES(kind), price, () =>
+          void rewarded(() => {
+            if (!game.grantAdGold(price)) return false;
+            game.build(kind, col, row);
+            return true;
+          }),
+        );
+        return;
+      }
       sfx.play('denied');
       toast(DENIED[reason] ?? 'You cannot build there.', 1800);
     },

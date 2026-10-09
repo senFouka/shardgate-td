@@ -29,7 +29,7 @@ export class BuildInput {
     private readonly rig: CameraRig,
     private readonly scene: THREE.Object3D,
     private readonly dummyFx: Particles,
-    private readonly hooks: { onSelect(t: Tower | null): void; onBuilt(): void; onDenied(reason: string): void; onCancelBuild(): void },
+    private readonly hooks: { onSelect(t: Tower | null): void; onBuilt(): void; onDenied(reason: string, kind: TowerId, col: number, row: number): void; onCancelBuild(): void },
   ) {
     for (const kind of ['bolt', 'mortar'] as const) this.ghostFor(kind);
     dom.addEventListener('pointermove', (e) => this.onMove(e));
@@ -117,7 +117,7 @@ export class BuildInput {
         if (e.pointerType === 'mouse') this.showGhost(cell.col, cell.row);
         else this.hideGhost();
       } else {
-        this.hooks.onDenied(res);
+        this.hooks.onDenied(res, this.picked, cell.col, cell.row);
         if (e.pointerType !== 'mouse') this.showGhost(cell.col, cell.row);
       }
       return;
