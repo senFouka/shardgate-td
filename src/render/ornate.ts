@@ -159,13 +159,23 @@ function ring(radius: number, y: number, tube: number, mat: THREE.Material, side
   return m;
 }
 
+const gemMats = new Map<string, THREE.MeshStandardMaterial>();
+
+/** One gem material per glow colour, shared by every tower that uses it. */
+function gemMaterial(glow: THREE.Color): THREE.MeshStandardMaterial {
+  const key = glow.getHexString() + glow.r.toFixed(3) + glow.g.toFixed(3) + glow.b.toFixed(3);
+  let m = gemMats.get(key);
+  if (!m) gemMats.set(key, (m = new THREE.MeshStandardMaterial({ color: glow.clone().multiplyScalar(0.35), emissive: glow, emissiveIntensity: 1.1, roughness: 0.2, flatShading: true })));
+  return m;
+}
+
 /* -------------------------------------------------------------- builder */
 
 export function buildOrnate(spec: OrnateSpec): Ornate {
   const t = Math.max(1, Math.min(3, spec.tier));
   const g = new THREE.Group();
   const FACES = 8;
-  const gemMat = new THREE.MeshStandardMaterial({ color: spec.glow.clone().multiplyScalar(0.35), emissive: spec.glow, emissiveIntensity: 1.1, roughness: 0.2, flatShading: true });
+  const gemMat = gemMaterial(spec.glow);
 
   // stepped octagonal plinth with front stairs
   const plinthR = 0.46 + t * 0.02;
@@ -268,15 +278,18 @@ export function buildOrnate(spec: OrnateSpec): Ornate {
     g.add(b);
   }
 
-  // tier 3: shards orbiting the crown
-  const shards: THREE.Mesh[] = [];
+  // tier 3: shards orbiting the crown (one ring that turns, so it draws as one mesh)
+  const shardRing = dynamic(new THREE.Group());
   if (t >= 3) {
     for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2;
       const s = new THREE.Mesh(new THREE.OctahedronGeometry(0.05, 0), gemMat);
       s.scale.y = 2.2;
-      shards.push(dynamic(s));
-      g.add(s);
+      s.position.set(Math.cos(a) * (topR + 0.22), topY + 0.25 + Math.sin(i * 1.7) * 0.05, Math.sin(a) * (topR + 0.22));
+      s.rotation.y = -a;
+      shardRing.add(s);
     }
+    g.add(shardRing);
   }
 
   g.traverse((o) => {
@@ -294,12 +307,10 @@ export function buildOrnate(spec: OrnateSpec): Ornate {
     topRadius: topR,
     update(time) {
       flare = Math.max(0, flare - 0.06);
-      gemMat.emissiveIntensity = 1.0 + Math.sin(time * 2.2) * 0.25 + flare * 2;
-      shards.forEach((s, i) => {
-        const a = time * 1.2 + (i / shards.length) * Math.PI * 2;
-        s.position.set(Math.cos(a) * (topR + 0.22), topY + 0.25 + Math.sin(time * 2 + i) * 0.05, Math.sin(a) * (topR + 0.22));
-        s.rotation.y = -a;
-      });
+      // the gems of all towers of one colour share a material (so they draw together): they pulse together
+      gemMat.emissiveIntensity = 1.0 + Math.sin(time * 2.2) * 0.25;
+      shardRing.rotation.y = -time * 1.2;
+      shardRing.position.y = Math.sin(time * 2) * 0.05;
     },
     pulse() {
       flare = 1;

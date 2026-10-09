@@ -5,6 +5,7 @@ import { buildOrnate, type Ornate } from './ornate';
 import type { TowerView } from './towers';
 import { dynamic } from './bake';
 import { TOWER_GLOW } from './towers';
+import { animatedMaterial } from './towerBatch';
 
 /**
  * The six element towers, our own designs on the ornate tower kit: each has
@@ -79,7 +80,7 @@ function emberTower(fx: Particles, L: number): TowerView {
   head.add(bowl);
   const coals = new THREE.Mesh(
     new THREE.CircleGeometry(0.27 + L * 0.02, 10),
-    flat(0x3a1004, { emissive: new THREE.Color(1.6, 0.45, 0.08), emissiveIntensity: 1.4 }),
+    animatedMaterial(flat(0x3a1004, { emissive: new THREE.Color(1.6, 0.45, 0.08), emissiveIntensity: 1.4 })),
   );
   coals.rotation.x = -Math.PI / 2;
   coals.position.y = 0.21;
@@ -149,13 +150,13 @@ function emberTower(fx: Particles, L: number): TowerView {
 /** Frost Spire: a slender spire crowned with ice crystals that slowly turn. */
 function frostTower(fx: Particles, L: number): TowerView {
   const { g, orn, head, muzzle } = shell(0x2a78b8, new THREE.Color(0.45, 1.1, 1.9), L, 'hourglass');
-  const ice = new THREE.MeshStandardMaterial({
+  const ice = animatedMaterial(new THREE.MeshStandardMaterial({
     color: 0x5fb8f0, emissive: new THREE.Color(0.1, 0.45, 1.0), emissiveIntensity: 0.55, roughness: 0.12, metalness: 0.1,
     transparent: true, opacity: 0.9, flatShading: true,
-  });
+  }));
   const crown = dynamic(new THREE.Group());
   head.add(crown);
-  const center = new THREE.Mesh(new THREE.OctahedronGeometry(0.14 + L * 0.02, 0), ice);
+  const center = dynamic(new THREE.Mesh(new THREE.OctahedronGeometry(0.14 + L * 0.02, 0), ice));
   center.scale.y = 2.6;
   center.position.y = 0.42 + L * 0.04;
   crown.add(center);
@@ -219,7 +220,7 @@ function frostTower(fx: Particles, L: number): TowerView {
 function galeTower(fx: Particles, L: number): TowerView {
   const { g, orn, head, muzzle } = shell(0x55229a, new THREE.Color(1.1, 0.7, 2.0), L, 'hourglass');
   head.position.y += 0.28;
-  const orbMat = new THREE.MeshStandardMaterial({ color: 0x6a4cff, emissive: new THREE.Color(0.45, 0.4, 1.4), emissiveIntensity: 1, roughness: 0.15 });
+  const orbMat = animatedMaterial(new THREE.MeshStandardMaterial({ color: 0x6a4cff, emissive: new THREE.Color(0.45, 0.4, 1.4), emissiveIntensity: 1, roughness: 0.15 }));
   const orb = dynamic(new THREE.Mesh(new THREE.SphereGeometry(0.15 + L * 0.025, 20, 14), orbMat));
   head.add(orb);
   const halos: THREE.Mesh[] = [];
@@ -280,7 +281,7 @@ function stoneTower(fx: Particles, L: number): TowerView {
   const boulder = dynamic(new THREE.Mesh(geo, ROCK));
   boulder.position.y = 0.45;
   head.add(boulder);
-  const runeMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 1.6, 0.5) });
+  const runeMat = animatedMaterial(new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 1.6, 0.5) }));
   const runes: THREE.Mesh[] = [];
   for (let i = 0; i < 3; i++) {
     const r = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.14, 0.02), runeMat);
@@ -291,12 +292,15 @@ function stoneTower(fx: Particles, L: number): TowerView {
     boulder.add(r);
     runes.push(r);
   }
-  const pebbles: THREE.Mesh[] = [];
+  const pebbleRing = dynamic(new THREE.Group());
   for (let i = 0; i < 1 + L; i++) {
+    const a = (i / (1 + L)) * Math.PI * 2;
     const p = new THREE.Mesh(new THREE.DodecahedronGeometry(0.06 + (i % 2) * 0.02, 0), ROCK);
-    pebbles.push(p);
-    head.add(dynamic(p));
+    p.position.set(Math.cos(a) * 0.44, 0.35 + Math.sin(i * 1.9) * 0.08, Math.sin(a) * 0.44);
+    p.rotation.set(i, i * 0.7, 0);
+    pebbleRing.add(p);
   }
+  head.add(pebbleRing);
   // gold brackets reaching up to the boulder
   for (let i = 0; i < 4; i++) {
     const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
@@ -323,11 +327,8 @@ function stoneTower(fx: Particles, L: number): TowerView {
       boulder.position.y = 0.45 + Math.sin(time * 1.4) * 0.05 - dip * 0.12;
       boulder.rotation.y = time * 0.4;
       runeMat.color.setRGB((2.2 + dip * 2) * TOWER_GLOW, (1.3 + dip) * TOWER_GLOW, 0.4 * TOWER_GLOW);
-      pebbles.forEach((p, i) => {
-        const a = time * (1.2 - i * 0.15) + (i / pebbles.length) * Math.PI * 2;
-        p.position.set(Math.cos(a) * 0.44, 0.35 + Math.sin(time * 2 + i) * 0.08, Math.sin(a) * 0.44);
-        p.rotation.x = time * 2 + i;
-      });
+      pebbleRing.rotation.y = -time * 1.1;
+      pebbleRing.position.y = Math.sin(time * 2) * 0.05;
     },
     onFire() {
       dip = 1;
@@ -349,7 +350,7 @@ function venomTower(fx: Particles, L: number): TowerView {
   ];
   const pot = new THREE.Mesh(new THREE.LatheGeometry(prof, 12), IRON);
   head.add(pot);
-  const brew = new THREE.Mesh(new THREE.CircleGeometry(0.24, 14), new THREE.MeshStandardMaterial({ color: 0x3a8a10, emissive: new THREE.Color(0.7, 2.0, 0.2), emissiveIntensity: 1.2, roughness: 0.2 }));
+  const brew = new THREE.Mesh(new THREE.CircleGeometry(0.24, 14), animatedMaterial(new THREE.MeshStandardMaterial({ color: 0x3a8a10, emissive: new THREE.Color(0.7, 2.0, 0.2), emissiveIntensity: 1.2, roughness: 0.2 })));
   brew.rotation.x = -Math.PI / 2;
   brew.position.y = 0.32;
   head.add(dynamic(brew));
@@ -398,9 +399,9 @@ function venomTower(fx: Particles, L: number): TowerView {
 function tideTower(fx: Particles, L: number): TowerView {
   const { g, orn, head, muzzle } = shell(0x0f5a6e, new THREE.Color(0.3, 1.5, 1.9), L, 'hourglass');
   head.position.y += 0.3;
-  const water = new THREE.MeshStandardMaterial({
+  const water = animatedMaterial(new THREE.MeshStandardMaterial({
     color: 0x2aa8d8, emissive: new THREE.Color(0.15, 0.9, 1.3), emissiveIntensity: 1.0, roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.85,
-  });
+  }));
   const sphere = dynamic(new THREE.Mesh(new THREE.IcosahedronGeometry(0.17 + L * 0.03, 2), water));
   head.add(sphere);
   const rings: THREE.Mesh[] = [];

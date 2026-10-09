@@ -4,6 +4,7 @@ import { createElementTower } from './elementTowers';
 import { Particles, rand } from './particles';
 import { buildOrnate } from './ornate';
 import { bakeStatic, dynamic } from './bake';
+import { animatedMaterial } from './towerBatch';
 
 /**
  * Tower models, our own designs built in code on the ornate tower kit
@@ -33,8 +34,8 @@ const MATS = {
   brass: flat(0xc79a45, { metalness: 0.65, roughness: 0.4 }),
   iron: flat(0x3d3f45, { metalness: 0.6, roughness: 0.45 }),
   bronze: flat(0x9a6a36, { metalness: 0.6, roughness: 0.4 }),
-  boltGlow: flat(0x2f5f9a, { emissive: new THREE.Color(0.35, 0.7, 1.0), emissiveIntensity: 1.6, roughness: 0.3 }),
-  ember: flat(0x5a2a10, { emissive: new THREE.Color(1.0, 0.45, 0.1), emissiveIntensity: 1.4 }),
+  boltGlow: animatedMaterial(flat(0x2f5f9a, { emissive: new THREE.Color(0.35, 0.7, 1.0), emissiveIntensity: 1.6, roughness: 0.3 })),
+  ember: animatedMaterial(flat(0x5a2a10, { emissive: new THREE.Color(1.0, 0.45, 0.1), emissiveIntensity: 1.4 })),
 };
 const GOLD_TRIM = new THREE.MeshStandardMaterial({ color: 0xd8a94c, metalness: 1, roughness: 0.32 });
 
@@ -126,7 +127,7 @@ function boltTower(fx: Particles, level: number): TowerView {
       g.add(band);
     }
   }
-  const runes: THREE.Mesh[] = [];
+  const runeRing = dynamic(new THREE.Group());
   if (L >= 3) {
     for (let i = 0; i < 4; i++) {
       const a = (i / 4) * Math.PI * 2;
@@ -137,10 +138,13 @@ function boltTower(fx: Particles, level: number): TowerView {
       g.add(blade);
     }
     for (let i = 0; i < 3; i++) {
+      const a = (i / 3) * Math.PI * 2;
       const r = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.13, 0.03), MATS.boltGlow);
-      runes.push(dynamic(r));
-      g.add(r);
+      r.position.set(Math.cos(a) * 0.34, collarY - 0.1 + Math.sin(i * 2.1) * 0.04, Math.sin(a) * 0.34);
+      r.rotation.y = -a;
+      runeRing.add(r);
     }
+    g.add(runeRing);
   }
 
   // the head: an arbalest with brass limbs and a glowing bolt
@@ -156,7 +160,7 @@ function boltTower(fx: Particles, level: number): TowerView {
     limb.rotation.y = side * -0.35;
     head.add(limb);
   }
-  const bolt = new THREE.Mesh(new THREE.OctahedronGeometry(0.06 + (L - 1) * 0.01, 0), MATS.boltGlow);
+  const bolt = dynamic(new THREE.Mesh(new THREE.OctahedronGeometry(0.06 + (L - 1) * 0.01, 0), MATS.boltGlow));
   bolt.scale.set(1, 1, 3.4);
   bolt.position.set(0, 0.1, 0.22);
   head.add(bolt);
@@ -187,11 +191,8 @@ function boltTower(fx: Particles, level: number): TowerView {
       head.position.z = -recoil * 0.08;
       bolt.visible = recoil < 0.55;
       (bolt.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.4 + (L - 1) * 0.4 + Math.sin(time * 4) * 0.3;
-      runes.forEach((r, i) => {
-        const a = time * 1.5 + (i / runes.length) * Math.PI * 2;
-        r.position.set(Math.cos(a) * 0.34, collarY - 0.1 + Math.sin(time * 2 + i) * 0.04, Math.sin(a) * 0.34);
-        r.rotation.y = -a;
-      });
+      runeRing.rotation.y = -time * 1.5;
+      runeRing.position.y = Math.sin(time * 2) * 0.04;
     },
     onFire() {
       recoil = 1;
@@ -278,7 +279,9 @@ function mortarTower(fx: Particles, level: number): TowerView {
   lip.position.z = 0.31;
   const glow = new THREE.Mesh(new THREE.CircleGeometry(0.1, 14), MATS.ember);
   glow.position.z = 0.3;
-  pivot.add(barrel, lip, glow);
+  const recoilPart = dynamic(new THREE.Group());
+  recoilPart.add(barrel, lip, glow);
+  pivot.add(recoilPart);
   head.add(pivot);
   g.add(head);
   const muzzle = new THREE.Object3D();
@@ -302,9 +305,7 @@ function mortarTower(fx: Particles, level: number): TowerView {
       turn(head, want, dt, 6);
       recoil = Math.max(0, recoil - dt * 3);
       const k = recoil * 0.1;
-      barrel.position.z = 0.1 - k;
-      lip.position.z = 0.31 - k;
-      glow.position.z = 0.3 - k;
+      recoilPart.position.z = -k;
       (glow.material as THREE.MeshStandardMaterial).emissiveIntensity = 1 + recoil * 3 + Math.sin(time * 5) * 0.2;
       if (Math.random() < dt * 3) {
         muzzle.getWorldPosition(wp);

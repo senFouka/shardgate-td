@@ -27,6 +27,11 @@ export interface CreepView {
   clips: { walk: number; death: number };
   /** the health bar, hidden by the sprite baker */
   bar: THREE.Object3D;
+  /** where a shared health bar goes (height above the creep's feet) and how wide */
+  barY: number;
+  barWidth: number;
+  /** true once the death animation has started (no bar any more) */
+  isDying(): boolean;
   update(c: CreepLike, dt: number, camera: THREE.Camera): void;
   /** plays the death and resolves when the body should be removed */
   die(): number;
@@ -60,7 +65,11 @@ function pickClip(clips: THREE.AnimationClip[], ...patterns: RegExp[]): THREE.An
   return null;
 }
 
-export function createCreepView(model: CreepModel, isBig: boolean): CreepView {
+/**
+ * @param sharedBar the game draws all health bars in one batch (render/healthBars.ts);
+ *   the visual slices pass false and get the creep's own bar meshes
+ */
+export function createCreepView(model: CreepModel, isBig: boolean, sharedBar = false): CreepView {
   const root = new THREE.Group();
   const body = cloneSkinned(model.gltf.scene) as THREE.Group;
   for (const a of model.attach ?? []) body.getObjectByName(a.bone)?.add(a.gltf.scene.clone());
@@ -109,6 +118,7 @@ export function createCreepView(model: CreepModel, isBig: boolean): CreepView {
   // health bar (billboard, drawn on top)
   const bar = new THREE.Group();
   const w = BAR_W * (isBig ? 1.3 : 1);
+  const barY = model.height + 0.28 + (model.hover ?? 0);
   const frame = new THREE.Mesh(barGeo, barFrameMat);
   frame.scale.set(w + 0.05, 0.11, 1);
   const back = new THREE.Mesh(barGeo, barBackMat);
@@ -117,8 +127,8 @@ export function createCreepView(model: CreepModel, isBig: boolean): CreepView {
   const fill = new THREE.Mesh(barGeo, fillMat);
   fill.scale.set(w, 0.07, 1);
   for (const [i, m] of [frame, back, fill].entries()) m.renderOrder = 100 + i;
-  bar.add(frame, back, fill);
-  bar.position.y = model.height + 0.28 + (model.hover ?? 0);
+  if (!sharedBar) bar.add(frame, back, fill);
+  bar.position.y = barY;
   root.add(bar);
 
   const hpColor = new THREE.Color();
@@ -130,6 +140,9 @@ export function createCreepView(model: CreepModel, isBig: boolean): CreepView {
     root,
     clips: { walk: walk?.duration ?? 0, death: death?.duration ?? 0 },
     bar,
+    barY,
+    barWidth: w,
+    isDying: () => dying,
     update(c, dt, camera) {
       mixer.update(dt * (dying ? 1 : (c.stun ?? 0) > 0 ? 0 : c.chill > 0 ? 0.55 : 1));
       if (!dying) {

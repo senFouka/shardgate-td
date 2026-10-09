@@ -5,6 +5,8 @@ import { Particles, rand, randDir } from '../render/particles';
 import { createTower, rangeRing, type TowerView } from '../render/towers';
 import { createCreepView, type CreepView } from '../render/creeps';
 import { DamageNumbers } from '../render/damageNumbers';
+import { TowerBatcher, type BatchHandle } from '../render/towerBatch';
+import { HealthBars } from '../render/healthBars';
 import type { CreepRoster } from '../render/creepModels';
 import { sfx } from '../systems/Sfx';
 import type { Creep, Game, Shot, Tower, TowerId } from './Game';
@@ -48,6 +50,11 @@ export class GameView {
   readonly root = new THREE.Group();
   /** floating damage numbers over hit creeps */
   private readonly numbers: DamageNumbers;
+  /** the still parts of all towers, drawn together */
+  private readonly batcher = new TowerBatcher();
+  private readonly batched = new Map<number, BatchHandle>();
+  /** all creeps' health bars, one draw call */
+  private readonly bars2 = new HealthBars();
   /** progress bars over towers that are being built, upgraded or converted */
   private readonly bars = new Map<number, { root: THREE.Group; fill: THREE.Mesh; top: number }>();
   private shake = 0;
@@ -61,7 +68,7 @@ export class GameView {
     this.fxAdd = new Particles(5000, true);
     this.fxSmoke = new Particles(1500, false, 1.2);
     this.numbers = new DamageNumbers(particleScale);
-    this.root.add(this.fxAdd.points, this.fxSmoke.points, this.range, this.numbers.mesh);
+    this.root.add(this.fxAdd.points, this.fxSmoke.points, this.range, this.numbers.mesh, this.batcher.root, this.bars2.mesh);
     game.on((e) => {
       // sounds for what happens on the battlefield
       // tower shots and hits are silent (the user's choice)
@@ -124,6 +131,8 @@ export class GameView {
     for (const k of this.corpses) this.root.remove(k.view.root);
     for (const s of this.shells.values()) this.root.remove(s);
     this.numbers.clear();
+    this.batched.clear();
+    this.batcher.dispose();
     for (const b of this.bars.values()) this.root.remove(b.root);
     this.bars.clear();
     this.towers.clear();
@@ -146,7 +155,14 @@ export class GameView {
 
   /* ------------------------------------------------------------- objects */
 
+  private unbatch(id: number): void {
+    const h = this.batched.get(id);
+    if (h) this.batcher.release(h);
+    this.batched.delete(id);
+  }
+
   private upgradeTower(t: Tower, element?: ElementId): void {
+    this.unbatch(t.id);
     const old = this.towers.get(t.id);
     const yaw = old?.head.rotation.y ?? 0;
     if (old) this.root.remove(old.group);
@@ -169,8 +185,10 @@ export class GameView {
     const v = createTower(t.kind, this.fxAdd, t.level);
     v.group.position.set(cellX(t.col), 0, cellZ(t.row));
     v.group.scale.setScalar(1.45);
+    v.group.name = 'tower';
     this.root.add(v.group);
     this.towers.set(t.id, v);
+    this.batched.set(t.id, this.batcher.adopt(v.group, `${t.kind}:${t.level}`));
     // a puff of dust as it lands
     for (let i = 0; i < (quiet ? 0 : 12) * this.particleScale(); i++) {
       const a = (i / 12) * Math.PI * 2;
@@ -180,6 +198,7 @@ export class GameView {
 
   private removeTower(t: Tower, sold: boolean): void {
     this.dropBar(t.id);
+    this.unbatch(t.id);
     const v = this.towers.get(t.id);
     if (!v) return;
     this.root.remove(v.group);
@@ -218,6 +237,8 @@ export class GameView {
       // rises from below the grass to its full height
       const ease = 1 - Math.pow(1 - p, 2);
       v.group.position.y = -(1 - ease) * bar.top * 0.92;
+      const h = this.batched.get(t.id);
+      if (h) this.batcher.sync(h, v.group);
       bar.root.position.y = bar.top + 0.35;
       if (Math.random() < 0.5 * n) {
         const a = Math.random() * Math.PI * 2;
@@ -268,8 +289,9 @@ export class GameView {
   }
 
   private addCreep(c: Creep): void {
-    const v = createCreepView(this.roster.getLook(c.look, c.boss), c.boss);
+    const v = createCreepView(this.roster.getLook(c.look, c.boss), c.boss, true);
     if (!this.roster.isLookReady(c.look)) this.standIns.add(c.id);
+    v.root.name = 'creep';
     this.root.add(v.root);
     this.creeps.set(c.id, v);
     const p = this.look(c);
@@ -579,15 +601,22 @@ export class GameView {
         this.root.remove(old.root);
         old.dispose();
       }
-      const v = createCreepView(this.roster.getLook(c.look, c.boss), c.boss);
+      const v = createCreepView(this.roster.getLook(c.look, c.boss), c.boss, true);
+      v.root.name = 'creep';
       this.root.add(v.root);
       this.creeps.set(id, v);
       this.standIns.delete(id);
     }
+    this.bars2.begin();
     for (const c of g.creeps) {
-      this.creeps.get(c.id)?.update(this.look(c), dt, camera);
+      const v = this.creeps.get(c.id);
+      if (v) {
+        v.update(this.look(c), dt, camera);
+        if (!v.isDying()) this.bars2.add(cellX(c.col), v.barY, cellZ(c.row), v.barWidth, c.hp / c.maxHp);
+      }
       this.statusFx(c, dt);
     }
+    this.bars2.end();
     for (let i = this.corpses.length - 1; i >= 0; i--) {
       const k = this.corpses[i];
       k.view.update(k.c, dt, camera);
@@ -604,7 +633,11 @@ export class GameView {
       if (t.work) this.workVisual(t, v, camera);
       else {
         if (this.bars.has(t.id)) this.dropBar(t.id);
-        v.group.position.y = 0;
+        if (v.group.position.y !== 0) {
+          v.group.position.y = 0;
+          const h = this.batched.get(t.id);
+          if (h) this.batcher.sync(h, v.group);
+        }
         // face the creep it would shoot, like the rules do
         const best = g.targetFor(t);
         if (best) v.aim(cellX(best.col), cellZ(best.row));
