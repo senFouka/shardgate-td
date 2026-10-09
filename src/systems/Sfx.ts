@@ -25,15 +25,13 @@ class Sfx {
     this.ctx = new Ctx();
     this.master = this.ctx.createGain();
     this.master.connect(this.ctx.destination);
-    // browsers start audio suspended until the first user gesture
+    // browsers start audio suspended until the first user gesture; iOS also suspends it
+    // after a call or an app switch and only lets a gesture wake it, so every tap checks
     const unlock = () => {
-      void this.ctx?.resume();
-      if (this.ctx?.state === 'running') {
-        window.removeEventListener('pointerdown', unlock);
-        window.removeEventListener('keydown', unlock);
-      }
+      if (this.ctx && this.ctx.state !== 'running') void this.ctx.resume();
     };
     window.addEventListener('pointerdown', unlock);
+    window.addEventListener('touchend', unlock);
     window.addEventListener('keydown', unlock);
     // ads and the platform's own mute setting silence everything at once
     platform.onAudioSuppressedChange((suppressed) => {

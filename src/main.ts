@@ -44,7 +44,31 @@ const DENIED: Record<string, string> = {
   locked: 'Unlock that element first.',
 };
 
+/**
+ * Browser defaults that get in the way inside the CrazyGames iframe (their
+ * "common fixes"): the page must not scroll with the wheel, arrow keys or
+ * Space, and right-click must not open the browser menu.
+ */
+function blockPageDefaults(): void {
+  window.addEventListener(
+    'wheel',
+    (e) => {
+      // menus that scroll (settings) keep their wheel
+      if ((e.target as HTMLElement | null)?.closest?.('.ui-modal, .hud-panel, .hud-pick')) return;
+      e.preventDefault();
+    },
+    { passive: false },
+  );
+  window.addEventListener('keydown', (e) => {
+    const t = e.target as HTMLElement | null;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return;
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'PageUp', 'PageDown'].includes(e.code)) e.preventDefault();
+  });
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+
 async function boot(): Promise<void> {
+  blockPageDefaults();
   await platform.init();
   platform.loadingStart();
   const saves = await loadSavesAtBoot();
